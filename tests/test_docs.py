@@ -95,11 +95,13 @@ def test_registered_files_match_their_recorded_sha256():
 
 # A commit hash in a doc or a source file points into history this repository does
 # not publish. The only ones allowed are those a registered protocol.json itself cites,
-# which cannot be edited and which the design history explains, plus the pinned revision
-# of a public upstream repository (imc-sim reads its log format at that revision).
+# which cannot be edited and which the design history explains, plus the pinned revisions
+# of public upstream repositories (imc-sim reads its log format at one; protocol v2's
+# amendment 5 pins the LLM arm's open weights at the other).
 COMMIT = re.compile(r"(?<![\w.\-…])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{7,40}(?![\w.\-…])")
 HEX_ALPHABET = "0123456789abcdef"  # a hex-digit check in code, not a hash
-PUBLIC_UPSTREAM = {"0094c681f8cd019889761e6431a1a47ea151aaa8"}  # nabayansaha/imc-prosperity-4-backtester
+PUBLIC_UPSTREAM = {"0094c681f8cd019889761e6431a1a47ea151aaa8",  # nabayansaha/imc-prosperity-4-backtester
+                   "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"}  # huggingface.co/Qwen/Qwen3.8-27B
 # Names of artefacts that were never published: a reader cannot follow them.
 UNPUBLISHED = re.compile(r"quantos release|probe receipt|batch-0\d", re.I)
 SKIP_DIRS = {"build", ".hypothesis", "__pycache__", ".pytest_cache"}
@@ -131,7 +133,7 @@ def unpublished(paths, allowed):
 
 def test_docs_and_sources_cite_no_unpublished_commit():
     protocols = sorted(ROOT.glob("results/*/protocol.json"))
-    allowed = {h for _, h in commit_refs(protocols)}
+    allowed = {h for _, h in commit_refs(protocols)} - PUBLIC_UPSTREAM
     assert allowed == {"2ec30c8", "2eeb94a"}
     paths = scanned()
     assert len(paths) >= 230 and any("packages/" in str(p) for p in paths) and any("apps/" in str(p) for p in paths)

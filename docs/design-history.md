@@ -53,12 +53,13 @@ The v1 run's outputs, written at 2026-10-03 18:16:43 and never rewritten:
 
 **Protocol v2** ([results/forward-2026-09](../results/forward-2026-09/README.md)),
 registered at 2026-10-03 18:52:14 and amended at 19:13:42, 19:28:07, 19:50:08 and
-20:13:14 (amendment 4, wording only). Each file is listed as it stood after the last
+20:13:14 (amendment 4, wording only), then on 2026-10-05 (amendment 5, the model; this one
+is in the public git history). Each file is listed as it stood after the last
 change to it; earlier versions are not published:
 
 | File | Registered, last changed | SHA-256 |
 |---|---|---|
-| [results/forward-2026-09/protocol.json](../results/forward-2026-09/protocol.json) | 18:52:14, amendment 4 at 20:13:14 | `ecc385788da9391177b178ccb47f06b309b8b6833b5c43317729bf041f162cf2` |
+| [results/forward-2026-09/protocol.json](../results/forward-2026-09/protocol.json) | 18:52:14, amendment 4 at 20:13:14, amendment 5 on 2026-10-05 | `665b7c5c3c80b932fe4e878bce2265492723415bbc9d69d96460b63274cb67e7` |
 | [results/forward-2026-09/campaign.json](../results/forward-2026-09/campaign.json) | 18:52:14 | `3cc3c622ecb36d5a17cfe52db9389c30f44a9d87c6fdc75e96f3202d0ab0062e` |
 | [results/forward-2026-09/experiment.json](../results/forward-2026-09/experiment.json) | 18:52:14 | `f992086c2cf7119013cea013e577512b30ad394cddb968e16d6d715cbcb816c0` |
 | [results/forward-2026-09/selection-experiment.json](../results/forward-2026-09/selection-experiment.json) | amendment 1 at 19:13:42 | `8cd956dc80bc8f004ce76603106dbe534ebb390bb50d325b743d637de260fa2c` |
@@ -107,6 +108,7 @@ the author's design and review.
 | 2026-10-03 19:50 | Amendment 3: the delisting robustness run uses the unfilled data | Amendment 2's "drop the pair entirely" could not reproduce the frozen selections |
 | 2026-10-03 20:13 | The fetcher records a delisting (a 404 after a pair's listed months) instead of stopping | A pair delisted in the forward window must still reach the fill |
 | 2026-10-03 20:13 | Amendment 4, wording only; the drop run is listed as step 5 | No rule, threshold or number changed |
+| 2026-10-05 | Amendment 5: the LLM arm's model becomes the open weights Qwen3.8-27B (`qwen/qwen3.8-27b:free` on OpenRouter), replacing `claude-opus-5-5`; the request settings and a rule for a retired endpoint are pre-registered. Before it, protocol.json's SHA-256 was `ecc385788da9391177b178ccb47f06b309b8b6833b5c43317729bf041f162cf2` | The author decided the arm uses no Anthropic or OpenAI model. `claude-opus-5-5` was never called (the CLI was logged out), so nothing was discarded |
 
 Each amendment was made before any LLM call, before any v2 score and before this
 repository fetched any bar after 2026-08-31; the amendments are recorded inside

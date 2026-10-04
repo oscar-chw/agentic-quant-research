@@ -1,4 +1,8 @@
-"""LLM transport for drafting tasks: a replay cache by default, ``claude -p`` on request.
+"""LLM transport for drafting tasks: a replay cache by default, a pinned open-weight model on request.
+
+The live transport is OpenRouter's OpenAI-compatible chat completions endpoint,
+serving the open weights ``Qwen/Qwen3.8-27B`` as ``qwen/qwen3.8-27b:free``. No
+Anthropic or OpenAI model is used.
 
 Neither transport carries research authority. Callers validate every response
 against a fixed schema, deterministic code computes every metric, and a human
@@ -10,8 +14,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
-import subprocess
+import urllib.error
+import urllib.request
 from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,8 +26,10 @@ from types import SimpleNamespace
 from .codex_broker import CODEX_OUTPUT_SCHEMA
 
 REPLAY_SCHEMA = "qrae.llm-replay/v1"
-# JSON output, because it names the model that actually answered (``modelUsage``).
-CLAUDE_COMMAND = ("claude", "-p", "--tools", "", "--no-session-persistence", "--output-format", "json")
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+# Pinned by protocol v2 amendment 5 (results/forward-2026-09/protocol.json), with the weights' HF revision.
+OPENROUTER_MODEL = "qwen/qwen3.8-27b:free"
+MAX_TOKENS = 8192
 MAX_RESPONSE_BYTES = 256 * 1024
 _FENCE = re.compile(r"\A```(?:json)?\s*\n(.*)\n```\s*\Z", re.S)
 
@@ -68,58 +76,101 @@ class ReplayProvider:
         return entry["response"]
 
 
-class ClaudeCliProvider:
-    """Calls the local ``claude -p`` with tools disabled; records what it returns.
+class MissingApiKey(RuntimeError):
+    """OPENROUTER_API_KEY is unset or empty. A live run must fail here, never skip the arm silently."""
 
-    ``model`` pins the model by its full id: an answer whose CLI-reported models
-    (``modelUsage``) do not include it is refused, never recorded. Every reported
-    id goes into the provenance. ``max_calls`` is a hard budget on attempts,
-    failed ones included, checked before each call.
+
+def _post(url: str, body: bytes, headers: dict, timeout: float) -> tuple[int, bytes]:
+    """POST with the standard library; returns (status, body), an HTTP error's included."""
+    request = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.status, response.read(MAX_RESPONSE_BYTES + 1)
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read(MAX_RESPONSE_BYTES + 1)
+    except (urllib.error.URLError, OSError) as exc:
+        raise RuntimeError(f"OpenRouter request failed: {exc}") from exc
+
+
+class OpenRouterProvider:
+    """Calls one pinned open-weight model on OpenRouter; records what it returns.
+
+    The request settings are fixed (temperature 0, reasoning effort none, bounded
+    ``max_tokens``) and pre-registered in protocol v2. An answer is refused, never
+    recorded, on a non-200 status, an ``error`` in the body or in the choice, a
+    ``finish_reason`` other than ``stop`` (a truncated answer is not an answer),
+    empty content, a body over the size cap, or a response ``model`` that is
+    neither the pinned id nor the pinned id without ``:free``. Each accepted
+    response's ``model``, ``provider`` and ``id`` go into the provenance.
+    ``max_calls`` is a hard budget on attempts, failed ones included, checked
+    before each call. The key comes from OPENROUTER_API_KEY only and is never
+    written into the provenance or a replay.
     """
 
-    name = "claude-cli"
+    name = "openrouter"
 
-    def __init__(self, *, timeout: int = 300, runner: Callable = subprocess.run,
+    def __init__(self, *, timeout: int = 300, post: Callable = _post,
                  model: str | None = None, max_calls: int | None = None):
+        key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+        if not key:
+            raise MissingApiKey("OPENROUTER_API_KEY is not set; no live call was made")
+        self._key = key
         self.timeout = timeout
-        self.runner = runner
-        self.model = model
+        self.post = post
+        self.model = model or OPENROUTER_MODEL
         self.max_calls = max_calls
         self.calls = 0
         self.recorded: list[dict] = []
-        self.reported_models: set[str] = set()
+        self.responses: list[str] = []
 
     @property
     def provenance(self) -> str:
-        reported = ", ".join(sorted(self.reported_models)) or "none yet"
-        return (f"REAL LLM OUTPUT from `claude -p` (requested model {self.model or 'CLI default'}; "
-                f"CLI-reported model ids: {reported}) with tools disabled")
+        seen = "; ".join(self.responses) or "none yet"
+        return (f"REAL LLM OUTPUT from OpenRouter {OPENROUTER_URL} (pinned model {self.model}; "
+                f"temperature 0, reasoning effort none, max_tokens {MAX_TOKENS}; "
+                f"responses as key=model/provider/id: {seen})")
 
-    def command(self) -> list[str]:
-        return list(CLAUDE_COMMAND) + (["--model", self.model] if self.model else [])
+    def request_body(self, prompt: bytes) -> bytes:
+        return json.dumps({"model": self.model, "messages": [{"role": "user", "content": prompt.decode("utf-8")}],
+                           "temperature": 0, "max_tokens": MAX_TOKENS,
+                           "reasoning": {"effort": "none"}}).encode("utf-8")
 
     def complete(self, key: str, prompt: bytes) -> str:
         if self.max_calls is not None and self.calls >= self.max_calls:
             raise RuntimeError(f"live call budget of {self.max_calls} exhausted before {key!r}")
         self.calls += 1
-        completed = self.runner(self.command(), input=prompt, capture_output=True,
-                                timeout=self.timeout, check=False, shell=False)
-        if completed.returncode != 0:
-            # The tail of stderr says why (a 429 usage-window error, a logged-out CLI).
-            detail = (getattr(completed, "stderr", None) or b"").decode("utf-8", "replace").strip()[-300:]
-            raise RuntimeError(f"claude -p exited {completed.returncode}: {detail}")
-        if len(completed.stdout) > MAX_RESPONSE_BYTES:
-            raise RuntimeError("claude -p response exceeds the size cap")
+        headers = {"Authorization": f"Bearer {self._key}", "Content-Type": "application/json"}
+        status, raw = self.post(OPENROUTER_URL, self.request_body(prompt), headers, self.timeout)
+        if len(raw) > MAX_RESPONSE_BYTES:
+            raise RuntimeError("OpenRouter response exceeds the size cap")
         try:
-            reply = json.loads(completed.stdout.decode("utf-8"))
-            text, models = reply["result"], set(reply.get("modelUsage") or {})
-        except (ValueError, KeyError, TypeError) as exc:
-            raise RuntimeError("claude -p did not return its JSON result object") from exc
-        if reply.get("is_error") or not isinstance(text, str):
-            raise RuntimeError(f"claude -p reported an error: {str(text)[:300]}")
-        if self.model and self.model not in models:
-            raise RuntimeError(f"claude -p answered with {sorted(models)}, not the pinned {self.model}; refusing")
-        self.reported_models |= models
+            reply = json.loads(raw.decode("utf-8"))
+        except ValueError:
+            reply = None
+        if status != 200:
+            # The tail of the error message says why (429: the free tier's rate limit).
+            error = reply.get("error") if isinstance(reply, dict) else None
+            detail = error.get("message") if isinstance(error, dict) else raw.decode("utf-8", "replace")
+            raise RuntimeError(f"OpenRouter returned HTTP {status}: {str(detail).strip()[-300:]}")
+        if not isinstance(reply, dict):
+            raise RuntimeError("OpenRouter did not return a JSON object")
+        if reply.get("error"):
+            raise RuntimeError(f"OpenRouter reported an error: {str(reply['error'])[:300]}")
+        try:
+            choice = reply["choices"][0]
+            choice_error, finish, text = choice.get("error"), choice.get("finish_reason"), choice["message"]["content"]
+        except (KeyError, IndexError, TypeError, AttributeError) as exc:
+            raise RuntimeError("OpenRouter did not return a chat completion") from exc
+        if choice_error:
+            raise RuntimeError(f"OpenRouter reported an error in the choice: {str(choice_error)[:300]}")
+        if finish != "stop":
+            raise RuntimeError(f"OpenRouter finish_reason is {finish!r}, not 'stop'; refusing")
+        if not isinstance(text, str) or not text.strip():
+            raise RuntimeError("OpenRouter returned no content")
+        answered = reply.get("model")
+        if answered not in {self.model, self.model.removesuffix(":free")}:
+            raise RuntimeError(f"OpenRouter answered with {answered!r}, not the pinned {self.model}; refusing")
+        self.responses.append(f"{key}={answered}/{reply.get('provider')}/{reply.get('id')}")
         self.recorded.append({"key": key, "prompt_sha256": prompt_sha256(prompt), "response": text})
         return text
 
@@ -134,7 +185,7 @@ class ClaudeCliProvider:
 
 
 class ReplayThenLive:
-    """Answers recorded keys from a replay and asks ``claude -p`` only for the rest.
+    """Answers recorded keys from a replay and asks the live model only for the rest.
 
     This lets proposals be recorded live and committed before the data that will
     judge them exists, with the critic called live later. A recorded key whose
@@ -142,9 +193,9 @@ class ReplayThenLive:
     replayed and the new entries together, with both provenances.
     """
 
-    name = "replay+claude-cli"
+    name = "replay+openrouter"
 
-    def __init__(self, replay: ReplayProvider, live: ClaudeCliProvider):
+    def __init__(self, replay: ReplayProvider, live: OpenRouterProvider):
         self.replay, self.live = replay, live
 
     @property

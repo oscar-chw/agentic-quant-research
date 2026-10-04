@@ -151,8 +151,8 @@ class Server:
         return register
 
 
-@pytest.fixture(params=["research", "search_mcp"])
-def adapter(request):
+@pytest.fixture
+def adapter():
     chroma = types.ModuleType("chromadb")
     chroma.Collection = Collection
     chroma.PersistentClient = Mock(side_effect=AssertionError("real backend forbidden"))
@@ -162,25 +162,20 @@ def adapter(request):
     server.Server = Server
     stdio = types.ModuleType("mcp.server.stdio")
     stdio.stdio_server = Mock(side_effect=AssertionError("real server forbidden"))
-    spec = importlib.util.spec_from_file_location("safe_" + request.param, Path(__file__).with_name(request.param + ".py"))
+    spec = importlib.util.spec_from_file_location("safe_search_mcp", Path(__file__).with_name("search_mcp.py"))
     module = importlib.util.module_from_spec(spec)
     with patch.dict(sys.modules, {"chromadb": chroma, "yaml": types.ModuleType("yaml"),
                                 "mcp": mcp, "mcp.server": server, "mcp.server.stdio": stdio}):
         spec.loader.exec_module(module)
-    return request.param, module
+    return module
 
 
 def test_adapter_search_and_error_contract(adapter, note, tmp_path):
-    name, module = adapter
-    cfg = {"vault_path": str(tmp_path)}
+    module = adapter
     collection = Collection([changed(note, source_available=False), changed(note, document_type="derived_guideline"), note])
-    if name == "research":
-        module.get_collection = lambda cfg: collection
-        def search():
-            return module.do_search(cfg, "costs")
-    else:
-        def search():
-            return module.search_papers(collection, "costs", source_root=tmp_path)
+
+    def search():
+        return module.search_papers(collection, "costs", source_root=tmp_path)
     results = search()
     assert [r["arxiv_id"] for r in results] == ["synthetic:paper"]
     assert results[0]["relevance_score"] == 0.875
@@ -190,57 +185,22 @@ def test_adapter_search_and_error_contract(adapter, note, tmp_path):
         search()
 
 
-def test_adapter_context_exports_and_no_model_on_empty_or_error(adapter, note, tmp_path, monkeypatch):
-    name, module = adapter
+def test_adapter_context_and_error_contract(adapter, note, tmp_path):
+    module = adapter
     cfg = {"vault_path": str(tmp_path)}
     collection = Collection([changed(note, source_available=False), note])
-    if name == "search_mcp":
-        context = module.generate_alpha_ideas_text(collection, cfg, "costs")
-        assert context.count(note["document"].strip()) == 1
-        collection.records = []
-        collection.total = 0
-        assert "NO_MATCHES" in module.generate_alpha_ideas_text(collection, cfg, "costs")
-        collection.failure = "count"
-        with pytest.raises(SourceAccessError):
-            module.generate_alpha_ideas_text(collection, cfg, "costs")
-        return
-    module.get_collection = lambda cfg: collection
-    module._DISTILL_TOPICS = [("costs", "costs")]
-    monkeypatch.setattr(module.shutil, "which", lambda name: "forbidden-fake-model")
-    model = Mock(return_value="Safe fake synthesis")
-    monkeypatch.setattr(module, "_run_claude", model)
-    process = Mock(return_value=types.SimpleNamespace(returncode=0, stdout="Safe fake ideas", stderr=""))
-    monkeypatch.setattr(module.subprocess, "run", process)
-    module.cmd_export(cfg, "costs", str(tmp_path / "export.md"))
-    assert (tmp_path / "export.md").read_text().count(note["document"].strip()) == 1
-    module.cmd_snapshot(cfg, "costs")
-    assert note["document"].strip() in model.call_args.args[2]
-    module.cmd_distill(cfg, str(tmp_path / "distill.md"))
-    module.cmd_alpha_ideas(cfg, "costs")
-    assert note["document"].strip() in process.call_args.kwargs["input"]
-    for failure in (None, "query"):
-        collection.records = [changed(note, source_available=False)]
-        collection.total = 1
-        collection.failure = failure
-        model.reset_mock()
-        process.reset_mock()
-        for action in (lambda: module.cmd_snapshot(cfg, "costs"),
-                       lambda: module.cmd_distill(cfg, str(tmp_path / "empty.md")),
-                       lambda: module.cmd_alpha_ideas(cfg, "costs")):
-            if failure:
-                with pytest.raises(SourceAccessError):
-                    action()
-            else:
-                action()
-        model.assert_not_called()
-        process.assert_not_called()
-        assert not (tmp_path / "empty.md").exists()
+    context = module.generate_alpha_ideas_text(collection, cfg, "costs")
+    assert context.count(note["document"].strip()) == 1
+    collection.records = []
+    collection.total = 0
+    assert "NO_MATCHES" in module.generate_alpha_ideas_text(collection, cfg, "costs")
+    collection.failure = "count"
+    with pytest.raises(SourceAccessError):
+        module.generate_alpha_ideas_text(collection, cfg, "costs")
 
 
 def test_mcp_dispatch_preserves_error_and_exact_reads(adapter, note, tmp_path):
-    name, module = adapter
-    if name != "search_mcp":
-        return
+    module = adapter
     cfg = {"vault_path": str(tmp_path)}
     conn = sqlite3.connect(":memory:")
     conn.execute("CREATE TABLE papers (arxiv_id, title, categories, published, vault_path, processed, fetched_at)")

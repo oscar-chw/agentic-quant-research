@@ -80,3 +80,14 @@ def test_real_run_script_scores_a_v2_study_with_fill_and_with_drop(tmp_path):
     dropped = json.loads((r / "robustness-dropped/ablation.json").read_text())
     # the same frozen picks are compared; only the test split sees the delisting
     assert [a.get("selected") for a in dropped["arms"]] == [a.get("selected") for a in result["arms"]]
+
+
+def test_forward_propose_without_a_key_stops_before_any_call(tmp_path):
+    """No key in the environment or the key file: exit 4 before the smoke starts, never a silent skip."""
+    env = {k: v for k, v in os.environ.items() if k != "OPENROUTER_API_KEY"}
+    env.update(PYTHON=sys.executable, HOME=str(tmp_path))
+    result = subprocess.run(["bash", "scripts/forward_propose.sh"], cwd=ROOT, env=env, capture_output=True,
+                            text=True, timeout=60)
+    assert result.returncode == 4
+    assert "OPENROUTER_API_KEY is not set (nor ~/.config/openrouter/api_key)" in result.stderr
+    assert "smoke" not in result.stdout

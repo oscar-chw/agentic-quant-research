@@ -17,6 +17,7 @@ Active research harness. **No headline performance result; the deliverable is th
 - A hash-bound work order identifies the dataset, point-in-time cutoff, registered costs, split policy, and evidence ceiling.
 - `DataCatalog` freezes normalized inputs and manifest evidence as immutable SHA-256-addressed objects; point-in-time snapshot resolution requires an `as_of` time.
 - The local kernel runs a chronological lagged baseline, recomputes metrics from its persisted return series, and independently reconstructs positions, delayed-fill returns and split-local costs from the frozen prices using rational arithmetic. It appends hash-linked state and claim artifacts. This internal reference check does not establish external replication or realistic execution.
+- `llm.py` is the LLM transport: a replay cache bound to each prompt's SHA-256 by default, or, when asked for, one pinned open-weight model (`qwen/qwen3.8-27b:free`, the weights `Qwen/Qwen3.8-27B`) on OpenRouter, with the key read from `OPENROUTER_API_KEY`. No Anthropic or OpenAI model is used.
 - The optional Codex broker accepts a bounded read-only task, then HMAC-signs a result receipt using a key stored outside the workspace; ingestion cannot change metrics, research state, capital, or execution authority.
 
 ```mermaid

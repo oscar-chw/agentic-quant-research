@@ -34,7 +34,7 @@ from factor_research.runs import run_trial, verify_run
 from note_index import NoteIndex
 from qrae import codex_broker
 from qrae.artifacts import canonical_json_bytes, sha256_bytes
-from qrae.llm import ClaudeCliProvider, ReplayProvider, ReplayThenLive, broker_runner, prompt_sha256, strip_fence
+from qrae.llm import MissingApiKey, OpenRouterProvider, ReplayProvider, ReplayThenLive, broker_runner, prompt_sha256, strip_fence
 from qrae.quote_features import strict_json
 from qrae.quote_workflow import checked_bundle, read_input, reserve
 from source_access import query_note_sources
@@ -704,7 +704,7 @@ def render(ledger):
 
 def provider_for(args):
     if args.live:
-        live = ClaudeCliProvider(model=args.model, max_calls=args.max_calls)
+        live = OpenRouterProvider(model=args.model, max_calls=args.max_calls)
         return ReplayThenLive(ReplayProvider(args.replay), live) if args.replay else live
     return ReplayProvider(args.replay)
 
@@ -744,10 +744,10 @@ def main(argv=None):
         propose.add_argument(flag, required=True)
     for sub in (run, propose):
         sub.add_argument("--replay", help="replay-cache file (offline); with --live, replayed keys first")
-        sub.add_argument("--live", action="store_true", help="call the local `claude -p` (for keys not replayed)")
+        sub.add_argument("--live", action="store_true", help="call the pinned model on OpenRouter, key from OPENROUTER_API_KEY (for keys not replayed)")
         sub.add_argument("--record", help="with --live: write the session to this new replay file")
-        sub.add_argument("--model", help="with --live: pin the model (recorded in the replay provenance)")
-        sub.add_argument("--max-calls", type=int, help="with --live: hard budget on claude -p attempts")
+        sub.add_argument("--model", help="with --live: the OpenRouter model id (default qwen/qwen3.8-27b:free; recorded in the provenance)")
+        sub.add_argument("--max-calls", type=int, help="with --live: hard budget on live call attempts, failed ones included")
     run.add_argument("--receipt-keys", help="critic receipt key directory (default: qrae's per-user store)")
     gate_cmd = commands.add_parser("gate", help="human decision: promote or reject hypotheses awaiting review")
     gate_cmd.add_argument("--run", required=True)
@@ -785,6 +785,9 @@ def main(argv=None):
             result = verify(args.run, receipt_keys=args.receipt_keys)
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
+    except MissingApiKey as exc:  # its own exit code, so a script cannot mistake it for a refusal
+        print(json.dumps({"status": "NO_API_KEY", "error": str(exc)}), file=sys.stderr)
+        return 4
     except (ValueError, OSError, LookupError, RuntimeError) as exc:
         print(json.dumps({"status": "REFUSED", "error": str(exc)}), file=sys.stderr)
         return 2

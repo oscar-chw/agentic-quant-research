@@ -31,11 +31,11 @@ flowchart TB
 ```
 
 Solid arrows are implemented calls. Dotted arrows mark the LLM transport: a
-replay cache by default, or the local `claude -p` when `--live` is passed.
+replay cache by default, or a pinned open-weight model (`qwen/qwen3.8-27b:free`) on OpenRouter when `--live` is passed.
 
 | Package | Owns | Current evidence | Missing |
 |---|---|---|---|
-| `packages/research` (qrae) | Work orders, point-in-time catalog, chronological price baseline, the bounded critic broker (`codex_broker.py`, named for its first backend; here it runs `claude -p`), the LLM transport (`llm.py`) | Unit and tamper tests; the broker's schema forbids state transitions and signs results with an HMAC receipt | No recorded live model run |
+| `packages/research` (qrae) | Work orders, point-in-time catalog, chronological price baseline, the bounded critic broker (`codex_broker.py`, named for its first backend; here it runs through the LLM transport), the LLM transport (`llm.py`) | Unit and tamper tests; the broker's schema forbids state transitions and signs results with an HMAC receipt | No recorded live model run |
 | `packages/vault` | Note eligibility (`source_access.py`), offline lexical retrieval (`note_index.py`), method cards for quote and factor methods (`method_contract.py`) | Digest-checked notes; cards that fix rules before evaluation | Retrieval quality is not evaluated; the demo vault is five hand-written notes |
 | `packages/factor` | CSV import under declared clocks, momentum and reversal features, rank IC, cost-adjusted interval sleeves, OHLCV directory import | Reference checks, missing-data and tamper tests, synthetic positive and regime-switch fixtures; 120 recomputed trials on 34 Binance daily pairs ([results/real-2026-10](../results/real-2026-10/REPORT.md)), matched by an independent pandas recomputation | A survivorship-free universe; a second test period |
 | `packages/marketdata` | Point-in-time book replay (`replay/`: scalar and batch reconstruction, a message feed, archived-feed admission); an opt-in C++20 replay port with a pybind11 module (`native/`) | Tests on 246 recorded golden cases and generated histories; a 41.66x batch-over-scalar replay measurement on 100,000 synthetic messages; byte-identical C++ output and Python-side parity tests for the module ([results-2026-10-04.json](../packages/marketdata/native/bench/results-2026-10-04.json)) | Live capture, a storage layer and representative workloads; a Python caller gets ~2.3x, not 25.10x, because the Python side of the call (by subtraction) dominates ([native/README.md](../packages/marketdata/native/README.md)) |

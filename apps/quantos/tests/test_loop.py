@@ -114,6 +114,19 @@ def test_proposals_can_be_recorded_before_any_price_and_replay_in_the_run(panels
     assert early["prompt_sha256"] == later["provider"]["propose_prompt_sha256"]
 
 
+def test_live_without_an_api_key_exits_4_and_records_nothing(tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    experiment = tmp_path / "experiment.json"
+    experiment.write_text(json.dumps(json.loads((EXAMPLES / "synthetic-contract.json").read_bytes())["experiment"]))
+    code = loop.main(["propose", "--campaign", str(EXAMPLES / "campaign.json"), "--experiment", str(experiment),
+                      "--vault", str(EXAMPLES / "vault"), "--live", "--record", str(tmp_path / "session.json")])
+    assert code == 4 and "OPENROUTER_API_KEY" in capsys.readouterr().err
+    assert not (tmp_path / "session.json").exists()
+    monkeypatch.setenv("OPENROUTER_API_KEY", "fake-key")
+    built = loop.provider_for(loop.argparse.Namespace(live=True, model=None, max_calls=3, replay=None))
+    assert (built.name, built.model, built.max_calls) == ("openrouter", "qwen/qwen3.8-27b:free", 3)
+
+
 def test_a_v1_ledger_is_refused_by_name(panels):
     run(panels, "control", ReplayProvider(EXAMPLES / "replay.hand-written.json"))
     path = panels / "store/control/ledger.json"

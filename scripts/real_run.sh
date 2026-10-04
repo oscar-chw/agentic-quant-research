@@ -6,7 +6,8 @@
 #   scripts/real_run.sh          grid, random-K and baselines; the LLM arm replays the committed
 #                                REAL LLM OUTPUT if it exists, else it is recorded as pending
 #   scripts/real_run.sh --live   the LLM loop live: replayed keys first (protocol v2 commits the
-#                                proposals in advance), claude -p for the rest, within the budget
+#                                proposals in advance), the pinned OpenRouter model for the rest,
+#                                within the budget; needs OPENROUTER_API_KEY
 # Writes $STUDY/{hypotheses,ablation}.json and REPORT.md, refusing to overwrite them
 # (git rm them to rerun; history keeps the earlier ones). WORK_DIR holds the trials.
 # A protocol with a delisting rule (v2) first extends every pair to the test end at its last
@@ -48,13 +49,15 @@ LOOP=(--campaign "$R/campaign.json" --prices "$W/import/prices.csv" --contract "
       --vault apps/quantos/examples/loop/vault --store "$W/loop" --run-id llm --receipt-keys "$W/receipt-keys")
 LLM=(--llm-run "$W/loop/llm" --receipt-keys "$W/receipt-keys")
 
-# `claude auth status` exits nonzero when logged out; its JSON still says why.
-login() { { claude auth status 2>/dev/null || true; } \
-          | "$PY" -c 'import json, sys; print(json.load(sys.stdin).get("loggedIn"))' 2>/dev/null || echo unavailable; }
 if [ "$OUT" != "$R" ]; then
   LLM=(--llm-pending "robustness run: the LLM arm is scored in the primary run; its pick's row is in hypotheses.json here")
 elif [ "${1:-}" = --live ]; then
-  if [ "$(login)" != True ]; then echo "error: the claude CLI is not logged in (claude auth status)" >&2; exit 4; fi
+  # The key comes from OPENROUTER_API_KEY, else from ~/.config/openrouter/api_key. Never printed.
+  if [ -z "${OPENROUTER_API_KEY:-}" ] && [ -r "$HOME/.config/openrouter/api_key" ]; then
+    OPENROUTER_API_KEY="$(tr -d '[:space:]' < "$HOME/.config/openrouter/api_key")"
+  fi
+  if [ -z "${OPENROUTER_API_KEY:-}" ]; then echo "error: OPENROUTER_API_KEY is not set (nor ~/.config/openrouter/api_key)" >&2; exit 4; fi
+  export OPENROUTER_API_KEY
   if [ "$(field schema)" = asof-ablation-protocol/v2 ]; then BUDGET="$(field arms llm live_call_budget critic)"
   else BUDGET="$(field arms llm max_live_calls)"; fi
   PRIOR=(); [ -f "$REPLAY" ] && PRIOR=(--replay "$REPLAY")
@@ -69,7 +72,7 @@ elif [ "${1:-}" = --live ]; then
 elif [ -f "$REPLAY" ] && "$PY" -m quantos_showcase.loop run "${LOOP[@]}" --replay "$REPLAY" >/dev/null 2>"$W/replay.err"; then
   :
 else
-  LLM=(--llm-pending "no complete LLM run: claude auth status reported loggedIn=$(login) on $(date -u +%F)")
+  LLM=(--llm-pending "no complete LLM run: $REPLAY is absent or did not replay cleanly on $(date -u +%F)")
 fi
 "$PY" -m quantos_showcase.ablation run --protocol "$R/protocol.json" --prices "$W/import/prices.csv" \
   --contract "$W/import/import-contract.json" --work "$W/trials" --out "$OUT" "${LLM[@]}"

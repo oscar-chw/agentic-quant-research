@@ -38,7 +38,37 @@
     "llm": {
       "campaign": "results/forward-2026-09/campaign.json",
       "k": 8,
-      "model": "claude-opus-5-5",
+      "model": "qwen/qwen3.8-27b:free",
+      "weights": {
+        "repository": "Qwen/Qwen3.8-27B (Hugging Face), open weights",
+        "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "license": "Apache-2.0",
+        "created_on_hugging_face": "2026-08-05",
+        "listed_on_openrouter": "2026-08-14",
+        "sources": [
+          "https://huggingface.co/api/models/Qwen/Qwen3.8-27B",
+          "https://openrouter.ai/api/v1/models"
+        ]
+      },
+      "transport": "POST https://openrouter.ai/api/v1/chat/completions (OpenAI-compatible), Authorization: Bearer key read from the OPENROUTER_API_KEY environment variable only; the key is never printed, logged, recorded or committed. qrae.llm.OpenRouterProvider; recorded to the replay files named in steps. No Anthropic or OpenAI model is used.",
+      "request": {
+        "body": {
+          "model": "qwen/qwen3.8-27b:free",
+          "messages": [
+            {
+              "role": "user",
+              "content": "<the prompt>"
+            }
+          ],
+          "temperature": 0,
+          "max_tokens": 8192,
+          "reasoning": {
+            "effort": "none"
+          }
+        },
+        "refused_and_not_recorded": "an HTTP status other than 200 (429 is the rate limit); a top-level error or choices[0].error; a finish_reason other than stop (length included); content that is not a non-empty string; a response body over 256 KiB; a response model other than the pinned id"
+      },
+      "rate_limits": "OpenRouter free tier (docs, api-reference/limits): 20 requests a minute; 50 a day without purchased credits. The budget of 12 calls fits.",
       "live_call_budget": {
         "total": 12,
         "synthetic_smoke": 3,
@@ -51,9 +81,10 @@
         "after 2027-08-31: STUDY=results/forward-2026-09 scripts/real_run.sh --live replays the committed proposals and calls the critic live (at most 8 calls)"
       ],
       "promotion": "same_as_other_arms: the arm's validation-NET selection is promoted by the shared gate alone. The loop's own card rule (validation only, sleeve cost) and critic still run and are reported, but do not enter promotion.",
-      "on_failure": "if claude fails, is logged out or returns 429, stop live calls, record why, and report the arm as pending",
-      "contamination": "record the model id and CLI version; if the model's training data extends past 2026-09-01, label the LLM result possibly contaminated",
-      "model_check": "claude -p is called with --output-format json and --model claude-opus-5-5; an answer whose CLI-reported model ids (modelUsage) do not include claude-opus-5-5 is refused and not recorded, and every reported id is written into the replay provenance. If the id is unknown to the CLI or retired when the critic runs, the call fails and is recorded; it is never retried under another model. The id was taken from the running session; it could not be checked against the CLI on 2026-10-03 because the CLI was logged out."
+      "on_failure": "if the key is missing, the endpoint returns 429 or another error, or a response is refused, stop live calls, record why, and report the arm as pending",
+      "contamination": "Qwen/Qwen3.8-27B was created on Hugging Face on 2026-08-05 (revision 1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0) and listed on OpenRouter on 2026-08-14, both before the test window starts (2026-09-01), so its training data cannot contain test-window bars: the LLM result is not contaminated by the test window. Record the model id, the revision and each response's model, provider and id.",
+      "model_check": "each response's model must be qwen/qwen3.8-27b:free or qwen/qwen3.8-27b; any other answer is refused and not recorded, and each accepted response's model, provider and id are written into the replay provenance. A failed call stops live calls (on_failure) and is never retried under another model.",
+      "retirement": "If the free endpoint is retired when the critic runs after 2027-08-31, the critic runs the same open weights (Qwen/Qwen3.8-27B at revision 1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0) with the same request settings on any host serving them, recorded as a deviation in DEVIATIONS.md. It never runs under a different model."
     },
     "grid": {
       "hypotheses": "every signal x lookback in the grid (120)"
@@ -169,6 +200,19 @@
         "wording only: the verdict's rule is written out as plain prose in ablation.json, and the power text says one year (364 intervals) instead of 365 days; no rule, threshold or number changed",
         "the delisting robustness run is listed as step 5 in the README",
         "not a scoring rule, recorded for completeness: scripts/fetch_binance_daily.py ends a pair's listing at a 404 after its listed months instead of stopping, and scripts/real_run.sh creates its work directory (it exited before scoring)"
+      ]
+    },
+    {
+      "id": 5,
+      "committed": "2026-10-05, before any LLM call; no LLM output, forward bar or v2 score existed",
+      "reason": "Oscar's decision on 2026-10-05 that the LLM arm uses no Anthropic and no OpenAI model, in any form. claude-opus-5-5 was never called: the claude CLI was logged out, so no output from it exists.",
+      "changes": [
+        "arms.llm.model is qwen/qwen3.8-27b:free, the open weights Qwen/Qwen3.8-27B (revision 1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0, Apache-2.0) served free on OpenRouter; the call budget is unchanged",
+        "model_check: each response's model must be the pinned id (with or without :free), otherwise the answer is refused",
+        "contamination: the weights were released on 2026-08-05 and listed on 2026-08-14, before the test window starts, so the result is not contaminated by it",
+        "on_failure: a missing key, a 429 or another error stops live calls; the reason is recorded and the arm reported as pending",
+        "the request settings are pre-registered: temperature 0, max_tokens 8192, reasoning effort none",
+        "retirement: if the free endpoint is gone when the critic runs, the same open weights run on another host, as a deviation; never another model"
       ]
     }
   ],

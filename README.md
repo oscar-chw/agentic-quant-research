@@ -9,7 +9,7 @@ enumerate all 120 hypotheses, or draw 8 at random.
 **First real run, pre-registered** (34 Binance pairs; validation 2024, test 2025-01 →
 2026-08; 10 bps a side): both controls' validation winners lost money out of sample
 (−6.89 and −7.38 bps/day) and nothing was promoted ([ablation.json](results/real-2026-10/ablation.json)).
-The LLM arm has not run yet (the `claude` CLI was not signed in when v1 ran); it is registered against a forward window that closes 2027-08-31.
+The LLM arm has not run yet (the `claude` CLI was not signed in when v1 ran); it is registered against a forward window that closes 2027-08-31, and since amendment 5 it uses an open-weight model, Qwen3.8-27B on OpenRouter, with no Anthropic or OpenAI model.
 The git history is short because the development history is private: the [publication history](docs/design-history.md#publication-history) says why, and what evidences the pre-registration instead.
 
 ![Net return by momentum lookback, 2024 against 2025-26](docs/assets/selection.png)
@@ -94,7 +94,7 @@ over 10,000 further random-K draws the pick's test net was positive in 0.12%
 **What the LLM must do to win.** Every hypothesis is already scored, so any 8 cards
 land between −15.32 and +3.79 bps/day; 30 of the 113 possible picks pass the gate
 ([posthoc.json](results/real-2026-10/posthoc.json)). [Protocol v2](results/forward-2026-09/README.md),
-amended four times before any LLM call, gives every arm one rule, selects on net, and
+amended five times before any LLM call, gives every arm one rule, selects on net, and
 has frozen the controls' picks.
 
 **Why believe the numbers.** [crosscheck_real.py](scripts/crosscheck_real.py)
@@ -152,7 +152,7 @@ The research path, readable in an hour:
 | [apps/quantos](apps/quantos/README.md) | `quantos-showcase` (`quantos_showcase`) | The loop ([loop.py](apps/quantos/src/quantos_showcase/loop.py)) and the ablation ([ablation.py](apps/quantos/src/quantos_showcase/ablation.py)) |
 | [packages/factor](packages/factor/README.md) | `offline-factor-research` (`factor_research`) | Point-in-time panels, rank IC, costs |
 | [packages/vault](packages/vault/README.md) | `quant-paper-store` (flat modules) | Notes, retrieval, method cards |
-| [packages/research](packages/research/README.md) | `qrae-rd` (`qrae`) | LLM transport; critic broker (`codex_broker.py`, named for its first backend, runs `claude -p`) |
+| [packages/research](packages/research/README.md) | `qrae-rd` (`qrae`) | LLM transport (a replay cache, or a pinned open-weight model on OpenRouter); critic broker (`codex_broker.py`, named for its first backend; it runs through that transport) |
 
 Supporting / separate experiments, not used by the study:
 - [packages/marketdata](packages/marketdata/native/README.md) (`quant-marketdata`, `replay`): point-in-time order-book replay and an opt-in C++20 port, ~2.3× from Python (2.30× through `replay.book`, 2.27× calling the module alone; their per-process medians overlap, so the gap is noise) and 25.10× C++ to C++ on a SYNTHETIC workload ([results](packages/marketdata/native/bench/results-2026-10-04.json)).
@@ -180,7 +180,7 @@ Lessons from what the repository records (confirmed by the author, 2026-10-03).
   sleeve-cost card rule, so v1's LLM arm could not win. Source:
   [the study README](results/real-2026-10/README.md#disclosures).
 - **An LLM transport must carry the whole contract.** The critic's output schema
-  reached Codex as a file argument but never reached `claude -p`. Source:
+  reached Codex as a file argument but never reached `claude -p`, the live transport then. Source:
   [llm.py](packages/research/src/qrae/llm.py), [test_llm.py](packages/research/tests/test_llm.py).
 - **Correctness, statistical evidence and economic utility are separate gates.**
   Source: [engineering-case-study.md](docs/engineering-case-study.md), recorded lesson.
