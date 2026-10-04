@@ -1,0 +1,39 @@
+{
+  "schema": "imc4-analysis-community-import/v1",
+  "source_format": "nabayansaha/prosperity4btest-log",
+  "producer_revision": "0094c681f8cd019889761e6431a1a47ea151aaa8",
+  "edition": "prosperity4",
+  "round": "synthetic-round-1",
+  "day": 0,
+  "mode": "own_fills",
+  "self_id": "SUBMISSION",
+  "quantity_unit": "integer_units",
+  "sequence_policy": "activities_then_trades_source_order",
+  "fill_identity_policy": "source_index_refuse_indistinguishable",
+  "fee_policy": {
+    "per_fill": "1",
+    "basis": "Original synthetic fixture: one XIREC per own fill; no access or conversion fee modeled."
+  },
+  "analysis": {
+    "type": "config",
+    "schema": "imc4-analysis/v1",
+    "label": "Imported synthetic community log: cash, fees and risk",
+    "data_kind": "synthetic",
+    "currency": "XIREC",
+    "timestamp_unit": "source_timestamp",
+    "start_timestamp": 0,
+    "initial_cash": "1000",
+    "mark_max_age": 100,
+    "markout_horizon": 100,
+    "instruments": {
+      "ALPHA": {
+        "initial_position": 0,
+        "limit": 1
+      },
+      "BETA": {
+        "initial_position": 0,
+        "limit": 1
+      }
+    }
+  }
+}

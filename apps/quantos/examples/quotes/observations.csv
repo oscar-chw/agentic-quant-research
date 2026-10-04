@@ -1,0 +1,8 @@
+instrument,event_ms,received_ms,available_ms,sequence,revision,bid_tick,ask_tick,bid_size,ask_size
+DEMO,0,0,0,0,0,99,101,3,1
+DEMO,10,20,25,1,0,100,102,1,1
+DEMO,20,35,35,2,0,100,102,1,1
+DEMO,30,30,30,3,0,101,103,3,1
+DEMO,30,45,45,3,1,101,103,1,3
+DEMO,50,55,60,4,0,103,105,1,1
+DEMO,90,90,90,5,0,105,107,2,2

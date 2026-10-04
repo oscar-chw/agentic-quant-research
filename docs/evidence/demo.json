@@ -1,0 +1,99 @@
+{
+  "data_qualification": {
+    "availability": "PROVIDED_CLOCKS_UNAUDITED",
+    "data_kind": "synthetic",
+    "historically_point_in_time_verified": false,
+    "profitability_evaluated": false,
+    "target": "next decision as-of observed midpoint; stale/missing pairs excluded"
+  },
+  "decision": {
+    "baseline_mae_ticks": "0",
+    "candidate_mae_ticks": "50",
+    "candidate_pairs": 3,
+    "coverage": "1/3",
+    "decision_rule": {
+      "baseline": "midpoint",
+      "candidate": "weighted_midpoint",
+      "metric": "mae_ticks",
+      "min_coverage": "1/3",
+      "min_improvement_ticks": "0",
+      "min_pairs": 1,
+      "split": "validation"
+    },
+    "evaluated_pairs": 1,
+    "improvement_ticks": "-50",
+    "metric": "mae_ticks",
+    "profitability_evaluated": false,
+    "split": "validation",
+    "statistical_significance_evaluated": false,
+    "status": "NOT_SUPPORTED",
+    "untouched_holdout_verified": false
+  },
+  "native": {
+    "feature_id": "features-eff493bd3fe8e6c57c202e0205fb99633413c1a242741847ee7df9c0ef47a7e2",
+    "research_run_id": "experiment-74f5c08585f591bd0c4ca85d5d2e5ed1c873168743d356e04138306c91683644",
+    "run_id": "feed-353da744ee51deea70e020b1cd44363b3719db9e9cb33312154a9344ed45fc96"
+  },
+  "native_outcome_sha256": "33a8b0b72c0778295ed9bbf397000fa231daf8f9f3c505dabb4ee37cbc1a9799",
+  "native_report_sha256": "25782855b1b6c81443548421df46bcf2810691c50b2c89160cf10622c23f9bf2",
+  "price_tick": "0.0001",
+  "schema": "portfolio-quantos-demo/v1",
+  "splits": {
+    "test": {
+      "candidate_pairs": 3,
+      "coverage": "1/3",
+      "evaluated_pairs": 1,
+      "excluded": {
+        "input:GAP": 1,
+        "target:GAP": 1
+      },
+      "models": {
+        "midpoint": {
+          "mae_ticks": "0",
+          "mse_ticks_squared": "0"
+        },
+        "weighted_midpoint": {
+          "mae_ticks": "50",
+          "mse_ticks_squared": "2500"
+        }
+      }
+    },
+    "train": {
+      "candidate_pairs": 3,
+      "coverage": "2/3",
+      "evaluated_pairs": 2,
+      "excluded": {
+        "continuity_break": 1
+      },
+      "models": {
+        "midpoint": {
+          "mae_ticks": "0",
+          "mse_ticks_squared": "0"
+        },
+        "weighted_midpoint": {
+          "mae_ticks": "50",
+          "mse_ticks_squared": "2500"
+        }
+      }
+    },
+    "validation": {
+      "candidate_pairs": 3,
+      "coverage": "1/3",
+      "evaluated_pairs": 1,
+      "excluded": {
+        "continuity_break": 2
+      },
+      "models": {
+        "midpoint": {
+          "mae_ticks": "0",
+          "mse_ticks_squared": "0"
+        },
+        "weighted_midpoint": {
+          "mae_ticks": "50",
+          "mse_ticks_squared": "2500"
+        }
+      }
+    }
+  },
+  "synthetic": true
+}

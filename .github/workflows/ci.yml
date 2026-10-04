@@ -1,0 +1,22 @@
+# Every package's tests, the optional C++ path and the offline demo (scripts/check.sh).
+# macOS because the pybind11 module is built and verified there (packages/marketdata/native);
+# check.sh builds and tests native whenever clang++ and pybind11 are present, else says SKIPPED.
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install the pinned requirements into ./.venv
+        run: python -m venv .venv && .venv/bin/pip install -r requirements.txt
+      - name: Show the C++ toolchain the native stage will use
+        run: clang++ --version
+      - name: Tests, native build and tests, demo
+        run: bash scripts/check.sh

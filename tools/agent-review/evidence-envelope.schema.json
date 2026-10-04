@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-quant-os:evidence-envelope:1.0",
+  "title": "QuantOS evidence envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "skill_version",
+    "mode",
+    "actor_role",
+    "facts",
+    "assumptions",
+    "unknowns",
+    "input_artifacts",
+    "contracts",
+    "run_state_before",
+    "requested_state",
+    "run_state_after",
+    "checks",
+    "evidence_tier",
+    "confidence_vector",
+    "decision",
+    "hard_blocks",
+    "permitted_claims",
+    "prohibited_claims",
+    "next_test",
+    "knowledge_records",
+    "numeric_results",
+    "safety"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "task_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "skill_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"},
+    "mode": {"enum": ["frame", "audit", "report"]},
+    "actor_role": {"enum": ["research", "audit", "report"]},
+    "facts": {"$ref": "#/$defs/stringList"},
+    "assumptions": {"$ref": "#/$defs/stringList"},
+    "unknowns": {"$ref": "#/$defs/stringList"},
+    "input_artifacts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/inputArtifact"}
+    },
+    "contracts": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "source",
+          "snapshot",
+          "feature",
+          "label",
+          "hypothesis",
+          "strategy",
+          "model",
+          "experiment",
+          "replay",
+          "result",
+          "decision",
+          "report",
+          "eval_case"
+        ]
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {"type": "string", "minLength": 1},
+          {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        ]
+      }
+    },
+    "run_state_before": {"$ref": "#/$defs/runState"},
+    "requested_state": {
+      "oneOf": [
+        {"$ref": "#/$defs/runState"},
+        {"const": "NONE"}
+      ]
+    },
+    "run_state_after": {"$ref": "#/$defs/runState"},
+    "checks": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/check"}
+    },
+    "evidence_tier": {"$ref": "#/$defs/evidenceTier"},
+    "confidence_vector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "C_data",
+        "C_mechanism",
+        "C_stat",
+        "C_generalization",
+        "C_model",
+        "C_execution",
+        "C_capacity",
+        "C_risk",
+        "C_ops",
+        "C_repro",
+        "C_governance"
+      ],
+      "properties": {
+        "C_data": {"$ref": "#/$defs/confidenceComponent"},
+        "C_mechanism": {"$ref": "#/$defs/confidenceComponent"},
+        "C_stat": {"$ref": "#/$defs/confidenceComponent"},
+        "C_generalization": {"$ref": "#/$defs/confidenceComponent"},
+        "C_model": {"$ref": "#/$defs/confidenceComponent"},
+        "C_execution": {"$ref": "#/$defs/confidenceComponent"},
+        "C_capacity": {"$ref": "#/$defs/confidenceComponent"},
+        "C_risk": {"$ref": "#/$defs/confidenceComponent"},
+        "C_ops": {"$ref": "#/$defs/confidenceComponent"},
+        "C_repro": {"$ref": "#/$defs/confidenceComponent"},
+        "C_governance": {"$ref": "#/$defs/confidenceComponent"}
+      }
+    },
+    "decision": {
+      "enum": ["REJECT", "RESEARCH", "REVISE", "DEEPEN", "REPORT", "PAPER_CANDIDATE"]
+    },
+    "hard_blocks": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$"}
+    },
+    "permitted_claims": {"$ref": "#/$defs/stringList"},
+    "prohibited_claims": {"$ref": "#/$defs/stringList"},
+    "next_test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "required_inputs", "stop_rule"],
+      "properties": {
+        "description": {"type": "string", "minLength": 1},
+        "required_inputs": {"$ref": "#/$defs/stringList"},
+        "stop_rule": {"type": "string", "minLength": 1}
+      }
+    },
+    "knowledge_records": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/knowledgeRecord"}
+    },
+    "numeric_results": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+      "additionalProperties": {"type": "number"}
+    },
+    "safety": {"$ref": "#/$defs/safety"}
+  },
+  "$defs": {
+    "stringList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidenceTier": {"enum": ["E0", "E1", "E2", "E3", "E4", "E5"]},
+    "runState": {
+      "enum": [
+        "REGISTERED",
+        "SOURCE_RESOLVED",
+        "SNAPSHOT_FROZEN",
+        "DATA_QUALITY_PASSED",
+        "QUARANTINED",
+        "CHEAP_FALSIFICATION",
+        "BASELINE_COMPLETE",
+        "EXPERIMENT_COMPLETE",
+        "INDEPENDENT_VALIDATION",
+        "REPORT_READY",
+        "HUMAN_REVIEW"
+      ]
+    },
+    "inputArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "cutoff", "sha256", "schema", "visibility", "license"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "cutoff": {"type": "string", "format": "date-time", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "schema": {"type": "string", "minLength": 1},
+        "visibility": {"type": "string", "minLength": 1},
+        "license": {"type": "string", "minLength": 1}
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "evidence_ref", "severity", "reason"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$"},
+        "status": {"enum": ["pass", "fail", "unavailable", "not_applicable"]},
+        "evidence_ref": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["info", "warning", "hard"]},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "confidenceComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence_refs", "tier", "rubric", "staleness", "blocker"],
+      "properties": {
+        "status": {"enum": ["pass", "fail", "unavailable", "not_applicable"]},
+        "evidence_refs": {"$ref": "#/$defs/stringList"},
+        "tier": {"$ref": "#/$defs/evidenceTier"},
+        "rubric": {"type": "string", "minLength": 1},
+        "staleness": {"type": "string", "minLength": 1},
+        "blocker": {
+          "oneOf": [
+            {"type": "string", "pattern": "^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "knowledgeRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "status", "provenance"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "type": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
+        "provenance": {"$ref": "#/$defs/stringList"}
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "secret_detected",
+        "secret_echoed",
+        "live_action_requested",
+        "live_action_executed",
+        "public_endpoint_requested",
+        "public_endpoint_started"
+      ],
+      "properties": {
+        "secret_detected": {"type": "boolean"},
+        "secret_echoed": {"const": false},
+        "live_action_requested": {"type": "boolean"},
+        "live_action_executed": {"const": false},
+        "public_endpoint_requested": {"type": "boolean"},
+        "public_endpoint_started": {"const": false}
+      }
+    }
+  }
+}

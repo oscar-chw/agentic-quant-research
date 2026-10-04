@@ -1,0 +1,278 @@
+{
+  "schema": "imc4-quote-study/v1",
+  "data_kind": "synthetic",
+  "scenarios": [
+    {
+      "id": "hand_ledger",
+      "policy": {
+        "inventory_penalty": "1",
+        "half_spread": "1",
+        "tick_size": "1",
+        "lot_size": 1,
+        "order_size": 1,
+        "min_position": -2,
+        "max_position": 2,
+        "max_horizon": 2,
+        "time_unit": "synthetic_tick",
+        "volatility_unit": "price_per_sqrt_tick",
+        "penalty_unit": "inverse_currency"
+      },
+      "initial_cash": "1000",
+      "initial_position": 0,
+      "fee_per_unit": "0.1",
+      "end_timestamp": 2,
+      "steps": [
+        {
+          "timestamp": 0,
+          "fair_price": "100",
+          "volatility": "1",
+          "seller_floor": "99",
+          "seller_units": 1,
+          "buyer_ceiling": "101",
+          "buyer_units": 0
+        },
+        {
+          "timestamp": 1,
+          "fair_price": "100",
+          "volatility": "1",
+          "seller_floor": "99",
+          "seller_units": 0,
+          "buyer_ceiling": "100",
+          "buyer_units": 1
+        },
+        {
+          "timestamp": 2,
+          "fair_price": "98",
+          "volatility": "1",
+          "seller_floor": "97",
+          "seller_units": 0,
+          "buyer_ceiling": "99",
+          "buyer_units": 0
+        }
+      ]
+    },
+    {
+      "id": "rising",
+      "policy": {
+        "inventory_penalty": "0.5",
+        "half_spread": "1",
+        "tick_size": "0.5",
+        "lot_size": 1,
+        "order_size": 2,
+        "min_position": -6,
+        "max_position": 6,
+        "max_horizon": 8,
+        "time_unit": "synthetic_tick",
+        "volatility_unit": "price_per_sqrt_tick",
+        "penalty_unit": "inverse_currency"
+      },
+      "initial_cash": "1000",
+      "initial_position": 0,
+      "fee_per_unit": "0.1",
+      "end_timestamp": 8,
+      "steps": [
+        {
+          "timestamp": 0,
+          "fair_price": "100",
+          "volatility": "1",
+          "seller_floor": "99",
+          "seller_units": 3,
+          "buyer_ceiling": "101",
+          "buyer_units": 0
+        },
+        {
+          "timestamp": 1,
+          "fair_price": "101",
+          "volatility": "1",
+          "seller_floor": "100",
+          "seller_units": 3,
+          "buyer_ceiling": "102",
+          "buyer_units": 0
+        },
+        {
+          "timestamp": 2,
+          "fair_price": "102",
+          "volatility": "1",
+          "seller_floor": "101",
+          "seller_units": 3,
+          "buyer_ceiling": "103",
+          "buyer_units": 0
+        },
+        {
+          "timestamp": 3,
+          "fair_price": "103",
+          "volatility": "1",
+          "seller_floor": "102",
+          "seller_units": 3,
+          "buyer_ceiling": "104",
+          "buyer_units": 0
+        },
+        {
+          "timestamp": 4,
+          "fair_price": "104",
+          "volatility": "1",
+          "seller_floor": "103",
+          "seller_units": 0,
+          "buyer_ceiling": "105",
+          "buyer_units": 3
+        },
+        {
+          "timestamp": 5,
+          "fair_price": "105",
+          "volatility": "1",
+          "seller_floor": "104",
+          "seller_units": 0,
+          "buyer_ceiling": "106",
+          "buyer_units": 3
+        },
+        {
+          "timestamp": 6,
+          "fair_price": "106",
+          "volatility": "1",
+          "seller_floor": "105",
+          "seller_units": 0,
+          "buyer_ceiling": "107",
+          "buyer_units": 3
+        },
+        {
+          "timestamp": 7,
+          "fair_price": "107",
+          "volatility": "1",
+          "seller_floor": "106",
+          "seller_units": 0,
+          "buyer_ceiling": "108",
+          "buyer_units": 3
+        },
+        {
+          "timestamp": 8,
+          "fair_price": "108",
+          "volatility": "1",
+          "seller_floor": "107",
+          "seller_units": 0,
+          "buyer_ceiling": "109",
+          "buyer_units": 0
+        }
+      ]
+    },
+    {
+      "id": "falling",
+      "policy": {
+        "inventory_penalty": "0.5",
+        "half_spread": "1",
+        "tick_size": "0.5",
+        "lot_size": 1,
+        "order_size": 2,
+        "min_position": -6,
+        "max_position": 6,
+        "max_horizon": 8,
+        "time_unit": "synthetic_tick",
+        "volatility_unit": "price_per_sqrt_tick",
+        "penalty_unit": "inverse_currency"
+      },
+      "initial_cash": "1000",
+      "initial_position": 0,
+      "fee_per_unit": "0.1",
+      "end_timestamp": 8,
+      "steps": [
+        {
+          "timestamp": 0,
+          "fair_price": "100",
+          "volatility": "1",
+          "seller_floor": "99",
+          "seller_units": 3,
+          "buyer_ceiling": "101",
+          "buyer_units": 0
+        },
+        {
+          "timestamp": 1,
+          "fair_price": "99",
+          "volatility": "1",
+          "seller_floor": "98",
+          "seller_units": 3,
+          "buyer_ceiling": "100",
+          "buyer_units": 0
+        },
+        {
+          "timestamp": 2,
+          "fair_price": "98",
+          "volatility": "1",
+          "seller_floor": "97",
+          "seller_units": 3,
+          "buyer_ceiling": "99",
+          "buyer_units": 0
+        },
+        {
+          "timestamp": 3,
+          "fair_price": "97",
+          "volatility": "1",
+          "seller_floor": "96",
+          "seller_units": 3,
+          "buyer_ceiling": "98",
+          "buyer_units": 0
+        },
+        {
+          "timestamp": 4,
+          "fair_price": "96",
+          "volatility": "1",
+          "seller_floor": "95",
+          "seller_units": 0,
+          "buyer_ceiling": "97",
+          "buyer_units": 3
+        },
+        {
+          "timestamp": 5,
+          "fair_price": "95",
+          "volatility": "1",
+          "seller_floor": "94",
+          "seller_units": 0,
+          "buyer_ceiling": "96",
+          "buyer_units": 3
+        },
+        {
+          "timestamp": 6,
+          "fair_price": "94",
+          "volatility": "1",
+          "seller_floor": "93",
+          "seller_units": 0,
+          "buyer_ceiling": "95",
+          "buyer_units": 3
+        },
+        {
+          "timestamp": 7,
+          "fair_price": "93",
+          "volatility": "1",
+          "seller_floor": "92",
+          "seller_units": 0,
+          "buyer_ceiling": "94",
+          "buyer_units": 3
+        },
+        {
+          "timestamp": 8,
+          "fair_price": "92",
+          "volatility": "1",
+          "seller_floor": "91",
+          "seller_units": 0,
+          "buyer_ceiling": "93",
+          "buyer_units": 0
+        }
+      ]
+    }
+  ],
+  "executions": [
+    {
+      "id": "immediate",
+      "queue_ahead_units": 0,
+      "cancel_delay_steps": 0
+    },
+    {
+      "id": "queue_2",
+      "queue_ahead_units": 2,
+      "cancel_delay_steps": 0
+    },
+    {
+      "id": "cancel_delay_1",
+      "queue_ahead_units": 0,
+      "cancel_delay_steps": 1
+    }
+  ]
+}

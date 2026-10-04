@@ -1,0 +1,11 @@
+{
+  "available_delay_seconds": 0,
+  "lookback": 1,
+  "cost_bps": 10,
+  "candidates": ["momentum"],
+  "splits": {
+    "train": {"start": "2020-01-01T23:59:59Z", "end": "2023-12-31T23:59:59Z"},
+    "validation": {"start": "2024-01-01T23:59:59Z", "end": "2026-08-31T23:59:59Z"},
+    "test": {"start": "2026-09-01T23:59:59Z", "end": "2027-08-31T23:59:59Z"}
+  }
+}

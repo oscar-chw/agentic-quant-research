@@ -1,0 +1,343 @@
+{
+  "schema": "replay-native-benchmark/v1",
+  "date": "2026-10-04",
+  "synthetic": true,
+  "workload": {
+    "messages": 100000,
+    "seed": 240914,
+    "queries": 64,
+    "delta_rows": 399600,
+    "output_levels": 128,
+    "source": "python/export_workload.py (the generator behind docs/evidence/replay-benchmark.json)"
+  },
+  "scope": "per repetition: API validation/preparation + replay + 64 independent books + all sorted output levels; workload loading and answer checking excluded for every implementation; python-native-batch and python-binding-batch (through the pybind11 module) also convert every input row to C++ and every output level back to Python",
+  "every_repetition_checked_against_reference_output": true,
+  "processes_per_implementation": 5,
+  "repetitions_per_process": 5,
+  "aggregation": "median of per-process medians",
+  "machine": {
+    "cpu": "Apple M2 Max",
+    "os": "macOS-26.4.1-arm64-arm-64bit",
+    "arch": "arm64",
+    "python": "3.11.15 (main, Mar  3 2026, 00:52:57) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+    "cxxflags": "-std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror",
+    "ext_cxxflags": "-std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror -DNDEBUG -fPIC -fvisibility=hidden -shared -undefined dynamic_lookup"
+  },
+  "commands": {
+    "python-scalar": "python bench/py_bench.py --ref <ref> --mode scalar",
+    "python-batch": "python bench/py_bench.py --ref <ref> --mode batch",
+    "cpp-batch": "build/replay_bench --mode batch",
+    "cpp-scalar": "build/replay_bench --mode scalar",
+    "python-native-batch": "python bench/py_bench.py --ref <ref> --mode native-batch",
+    "python-binding-batch": "python bench/py_bench.py --ref <ref> --mode binding-batch"
+  },
+  "summary": {
+    "python-scalar": {
+      "median_of_process_medians_seconds": 0.813541875,
+      "process_medians_seconds": [
+        0.813541875,
+        0.816684166,
+        0.807220875,
+        0.81584,
+        0.812113458
+      ],
+      "min_seconds": 0.803221959,
+      "max_seconds": 0.827291083
+    },
+    "python-batch": {
+      "median_of_process_medians_seconds": 0.019524291,
+      "process_medians_seconds": [
+        0.019524291,
+        0.019243083,
+        0.019753917,
+        0.020427,
+        0.019349167
+      ],
+      "min_seconds": 0.019174,
+      "max_seconds": 0.028015792
+    },
+    "cpp-batch": {
+      "median_of_process_medians_seconds": 0.000777708,
+      "process_medians_seconds": [
+        0.000777708,
+        0.000808041,
+        0.000761667,
+        0.000804417,
+        0.000772709
+      ],
+      "min_seconds": 0.000757625,
+      "max_seconds": 0.001208083
+    },
+    "cpp-scalar": {
+      "median_of_process_medians_seconds": 0.010897291,
+      "process_medians_seconds": [
+        0.010786667,
+        0.010825292,
+        0.010897291,
+        0.011044792,
+        0.010959
+      ],
+      "min_seconds": 0.010676167,
+      "max_seconds": 0.011384208
+    },
+    "python-native-batch": {
+      "median_of_process_medians_seconds": 0.008482125,
+      "process_medians_seconds": [
+        0.008482125,
+        0.008493667,
+        0.008296292,
+        0.008727208,
+        0.008255084
+      ],
+      "min_seconds": 0.008098625,
+      "max_seconds": 0.012352625
+    },
+    "python-binding-batch": {
+      "median_of_process_medians_seconds": 0.008571334,
+      "process_medians_seconds": [
+        0.008571334,
+        0.00856375,
+        0.008801709,
+        0.008599084,
+        0.008459084
+      ],
+      "min_seconds": 0.008065625,
+      "max_seconds": 0.011578416
+    }
+  },
+  "ratios": {
+    "python_scalar_over_cpp_batch": 1046.0762586986375,
+    "python_batch_over_cpp_batch": 25.104912126402198,
+    "python_scalar_over_python_batch": 41.668190409577484,
+    "cpp_scalar_over_cpp_batch": 14.012059796221719,
+    "python_batch_over_python_native_batch": 2.3018159954020954,
+    "python_batch_over_python_binding_batch": 2.277859082378542,
+    "python_native_batch_over_cpp_batch": 10.906567760650526,
+    "python_binding_batch_over_cpp_batch": 11.021275337273115
+  },
+  "raw_nanoseconds": {
+    "python-scalar": [
+      [
+        811864250,
+        813541875,
+        818821625,
+        815869125,
+        813398959
+      ],
+      [
+        823836917,
+        827291083,
+        813803041,
+        810605334,
+        816684166
+      ],
+      [
+        807220875,
+        803221959,
+        815566500,
+        803431250,
+        812084000
+      ],
+      [
+        814911750,
+        818271958,
+        816729209,
+        810219666,
+        815840000
+      ],
+      [
+        812113458,
+        809370334,
+        815563166,
+        818265375,
+        811184709
+      ]
+    ],
+    "python-batch": [
+      [
+        28015792,
+        20051625,
+        19377042,
+        19397542,
+        19524291
+      ],
+      [
+        27801125,
+        19757166,
+        19228083,
+        19174000,
+        19243083
+      ],
+      [
+        27602834,
+        19753917,
+        19372125,
+        19462792,
+        19848250
+      ],
+      [
+        27431125,
+        20427000,
+        20533875,
+        20244250,
+        19626125
+      ],
+      [
+        27688541,
+        19748208,
+        19257500,
+        19217791,
+        19349167
+      ]
+    ],
+    "cpp-batch": [
+      [
+        850666,
+        784125,
+        777708,
+        761666,
+        764791
+      ],
+      [
+        808041,
+        757625,
+        781042,
+        854042,
+        816292
+      ],
+      [
+        1208083,
+        798750,
+        760667,
+        760292,
+        761667
+      ],
+      [
+        900916,
+        788250,
+        804417,
+        798208,
+        806416
+      ],
+      [
+        930583,
+        779583,
+        772709,
+        762375,
+        764292
+      ]
+    ],
+    "cpp-scalar": [
+      [
+        10887708,
+        10786667,
+        10755333,
+        10737750,
+        10880542
+      ],
+      [
+        10826667,
+        10825292,
+        10676167,
+        10801416,
+        10980416
+      ],
+      [
+        11384208,
+        10841542,
+        10978833,
+        10852417,
+        10897291
+      ],
+      [
+        11329667,
+        10738250,
+        11044792,
+        11132958,
+        10740625
+      ],
+      [
+        11161000,
+        11014792,
+        10907375,
+        10951208,
+        10959000
+      ]
+    ],
+    "python-native-batch": [
+      [
+        10546167,
+        8156500,
+        8508416,
+        8467625,
+        8482125
+      ],
+      [
+        12352625,
+        8256208,
+        8424333,
+        8681667,
+        8493667
+      ],
+      [
+        11355250,
+        8576000,
+        8296292,
+        8267208,
+        8242542
+      ],
+      [
+        10050500,
+        8727208,
+        8540917,
+        8746459,
+        8324917
+      ],
+      [
+        10966167,
+        8358875,
+        8148125,
+        8255084,
+        8098625
+      ]
+    ],
+    "python-binding-batch": [
+      [
+        10180208,
+        8571334,
+        8583667,
+        8184916,
+        8065625
+      ],
+      [
+        11578416,
+        8368958,
+        8776125,
+        8563750,
+        8227334
+      ],
+      [
+        10939875,
+        8801709,
+        8876417,
+        8209041,
+        8279625
+      ],
+      [
+        9586917,
+        8146292,
+        8599084,
+        8717000,
+        8250084
+      ],
+      [
+        10382833,
+        8459084,
+        8136375,
+        8356792,
+        8479792
+      ]
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "replay-workload-digests/v1",
+  "synthetic": true,
+  "history_note": "Until 2026-10-04 this file held a Python batch-over-scalar timing of the replay implementation this package shipped then. That implementation was copied from a private codebase and was removed on 2026-10-04, so its timings and source digests were dropped here: they measured code that is not in this repository and cannot be re-run. What remains is the workload and the two digests every implementation still reproduces. Current timings: packages/marketdata/native/bench/results-2026-10-04.json.",
+  "workload": {
+    "generator": "packages/marketdata/native/python/export_workload.py",
+    "seed": 240914,
+    "query_seed": 240918,
+    "messages": 100000,
+    "snapshot_every_messages": 1000,
+    "book": "one bid and one ask level",
+    "step_ms": 1,
+    "queries": 64
+  },
+  "message_stream_sha256": "67d36ed8600fa58b09aef5e1e20e7ff3ba44bffe571e26f7cfbee7366843aebc",
+  "output_bytes": 2782,
+  "output_levels": 128,
+  "output_sha256": "279cc86976de46b9d48938599e4e255288a09b945dadca08dc3c2c7393583849"
+}

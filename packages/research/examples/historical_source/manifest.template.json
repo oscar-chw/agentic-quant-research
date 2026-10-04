@@ -1,0 +1,65 @@
+{
+  "bitemporal": {
+    "acquired_at": "2026-01-02T00:00:00Z",
+    "available_time_field": "available_time",
+    "event_time_field": "event_time",
+    "ingested_at": "2026-01-02T00:05:00Z",
+    "source_published_at": "2026-01-01T23:59:00Z"
+  },
+  "calendar": {
+    "calendar_id": "PROVIDER_CRYPTO_24_7",
+    "evidence": {
+      "path": "data/calendar-evidence.txt",
+      "sha256": "REPLACE_WITH_SHA256",
+      "size_bytes": 1
+    },
+    "session_policy": "CONTINUOUS_24_7",
+    "timezone": "UTC"
+  },
+  "dataset_id": "replace-dataset-id",
+  "family_controls": {
+    "fork_delisting_policy": {
+      "path": "data/fork-delisting-policy.txt",
+      "sha256": "REPLACE_WITH_SHA256",
+      "size_bytes": 1
+    },
+    "venue_symbol_history": {
+      "path": "data/venue-symbol-history.txt",
+      "sha256": "REPLACE_WITH_SHA256",
+      "size_bytes": 1
+    }
+  },
+  "license": {
+    "entitlement_id_sha256": "REPLACE_WITH_SHA256_OF_NONSECRET_ENTITLEMENT_ID",
+    "evidence": {
+      "path": "data/license-evidence.txt",
+      "sha256": "REPLACE_WITH_SHA256",
+      "size_bytes": 1
+    },
+    "evidence_type": "DATASET_TERMS",
+    "expires_at": "2027-01-01T00:00:00Z",
+    "use_scope": "LOCAL_RESEARCH_ONLY",
+    "valid_from": "2026-01-01T00:00:00Z"
+  },
+  "market_family": "CRYPTO",
+  "price_data": {
+    "path": "data/prices.csv",
+    "schema": "qrae.price-bars.v1",
+    "sha256": "REPLACE_WITH_SHA256",
+    "size_bytes": 1
+  },
+  "provider": "Replace Provider",
+  "provider_dataset_id": "replace-provider-dataset-id",
+  "revision_policy": {
+    "evidence": {
+      "path": "data/revision-policy.txt",
+      "sha256": "REPLACE_WITH_SHA256",
+      "size_bytes": 1
+    },
+    "mode": "VINTAGED",
+    "supersedes_manifest_sha256": null,
+    "vintage_id": "VINTAGE_20260102"
+  },
+  "schema_version": "qrae.historical-source-manifest.v1",
+  "source_uri": "https://data.example.invalid/path/to/prices.csv"
+}

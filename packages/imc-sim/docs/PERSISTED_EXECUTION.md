@@ -1,0 +1,28 @@
+# Persisted synthetic execution
+
+Version0.4.0 adds a finite local persisted workflow using the same completed-step transition as one-shot quote studies. A commit preserves cash, inventory, the ordered live orders and their remaining quantities, pending cancellation clocks and execution counters together with their event/trace delta. This is deterministic simulation on one qualified local POSIX filesystem, with cooperating writers. It does not connect to an account or qualify market performance.
+
+Use the installed entry points (`make install` from the monorepo root, or `$PY -m imc4_analysis` after `source scripts/env.sh`). STORE must be an absolute path without symlink components (resolve an internally created macOS temporary root before passing it):
+
+```sh
+imc4-analyze persist-run --store /absolute/private/studies --attempt example --stop-after 67
+imc4-analyze checkpoint --store /absolute/private/studies --attempt example > /absolute/private/checkpoint.json
+imc4-analyze resume --store /absolute/private/studies --attempt example --token /absolute/private/checkpoint.json
+imc4-analyze verify-attempt --store /absolute/private/studies --attempt example --recompute
+```
+
+`checkpoint` prints a JSON result containing a token; `resume --token` accepts that result or the token object alone. Python equivalents are `persistence.run`, `checkpoint`, `resume` and `verify`. An optional SHA256 context binding must be supplied consistently. Output is fixed at STORE/ATTEMPT/product; the packaged study retains its94-file native product. Operational state and at most two forensic generations live alongside it, inside the same accounted attempt root. The preexisting one-shot commands keep their output selection and behavior.
+
+The token separates economic generation (completed steps) from revision (all committed lifecycle changes). Stop budgets count completed simulation steps only. An explicit budget reaching the terminal step can return COMPUTE_COMPLETE; the next unbudgeted resume publishes from committed deltas without invoking the strategy or matcher. An acknowledgement lost after COMMIT makes the older token stale. Read checkpoint and use its current token; the old step is never inferred uncommitted from a missing reply.
+
+A restored pending cancellation still reserves executable exposure. In the packaged rising/delay1/inventory scenario, after tick3 the live sell inventory-2-sell is due at4, while inventory-3-sell is not yet due. After tick4 only one unit remains of inventory-4-sell. Restoring the original size2 would invent exposure. Cash/fees come from the same precision50 primitive as the analyzer; quoting/matching stay at precision80. Final markouts are retrospective reports, unavailable to past policy decisions. Negative outcomes, including the delayed inventory policy's−14.6 marked P&L, remain visible.
+
+The prefix audit checks immutable inputs/runtime/native code, SQL and digest lineage, contiguous identities and recorded effects. It projects cash, quantities, cancellation effects and counters with native validation/accounting functions, then loads the last verified boundary and executes only the remaining suffix. It does not generate decisions at old clocks or re-run the matcher during audit. This is integrity and effect consistency for cooperating ownership, not hostile-owner authentication of an entirely rewritten database and commitments.
+
+SQLite uses DELETE rollback journaling, FULL synchronization, immediate transactions and no dirty-page spill. A stable nonblocking attempt lock covers each mutating invocation; checkpoint/verify use shared ownership and read-only SQLite after refusing recovery-needed journals. A database/journal pair requiring recovery is copied and hash-verified before SQLite can recover it. Uncertain failures stop rather than retrying from tentative memory. Existing paths are never reset to genesis.
+
+Publication has a separate commit domain. A permanent hard-link anchor to the first scenario.json payload and its directory identity bind a generation before later files are written. If the process exits between directory creation and committed ownership registration, the existing output is ambiguous and is preserved/refused. An owned partial product can be retained in a bounded forensic generation before one new publication attempt. Same-byte directory/file replacements, unexpected content and exhausted preservation capacity refuse. A complete product surviving an exit before the database's COMPLETE record can be verified and reconciled; an already COMPLETE attempt with missing/changed output is not silently regenerated.
+
+Operational admission is18 runs/1024 steps/256KiB raw. Per-record JSON and decoded structures are bounded; total logical journal content is8MiB. A15MiB SQLite page ceiling plus the qualified-sector rollback-journal reserve stays below the64MiB database/journal cap. Product content is capped at128MiB and all attempt content at512MiB. At most two forensic generations are retained, with capacity reserved before writes/copies. The SQLite compile option and single-row transaction-rollback SQL forms are checked to exclude an unaccounted statement-journal domain. File-content limits are not physical-device write-amplification or power-loss guarantees.
+
+Resume must audit the committed prefix, so its work grows with the retained history; no constant-time restart or throughput claim is made. Measured audit, remaining computation and publication costs should be reported separately. Process-exit fault tests, filesystem ownership checks and SQLite rollback tests do not establish machine/power-loss recovery, multi-host locking, migration, a production service or overall strategy qualification.

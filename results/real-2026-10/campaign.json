@@ -1,0 +1,11 @@
+{
+  "schema": "quantos-loop-campaign/v1",
+  "id": "binance-daily-lagged-return",
+  "question": "Across 34 Binance USDT spot pairs at daily closes, does a lagged cross-sectional return signal rank next-day returns?",
+  "k": 8,
+  "data_label": "REAL",
+  "retrieval": {"query": "cross-sectional momentum reversal lagged returns winners losers", "n_results": 4},
+  "signals": ["momentum", "reversal"],
+  "max_lookback": 60,
+  "rule": {"min_rank_ic": "1/100", "min_valid_dates": 100, "min_net_mean": "0"}
+}
