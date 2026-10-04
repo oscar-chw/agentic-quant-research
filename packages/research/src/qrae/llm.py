@@ -30,6 +30,11 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 # Pinned by protocol v2 amendment 5 (results/forward-2026-09/protocol.json), with the weights' HF revision.
 OPENROUTER_MODEL = "qwen/qwen3.8-27b:free"
 MAX_TOKENS = 8192
+# The listing (model-evidence/openrouter-qwen38-free.json) offers efforts xhigh, medium and low,
+# default xhigh, and not "none", which could be refused or silently run at xhigh. "low" is the
+# smallest offered; exclude keeps the reasoning text out of the response, though it still counts
+# against max_tokens.
+REASONING = {"effort": "low", "exclude": True}
 MAX_RESPONSE_BYTES = 256 * 1024
 _FENCE = re.compile(r"\A```(?:json)?\s*\n(.*)\n```\s*\Z", re.S)
 
@@ -95,9 +100,9 @@ def _post(url: str, body: bytes, headers: dict, timeout: float) -> tuple[int, by
 class OpenRouterProvider:
     """Calls one pinned open-weight model on OpenRouter; records what it returns.
 
-    The request settings are fixed (temperature 0, reasoning effort none, bounded
-    ``max_tokens``) and pre-registered in protocol v2. An answer is refused, never
-    recorded, on a non-200 status, an ``error`` in the body or in the choice, a
+    The request settings are fixed (temperature 0, reasoning effort low and excluded
+    from the response, bounded ``max_tokens``) and pre-registered in protocol v2. An
+    answer is refused, never recorded, on a non-200 status, an ``error`` in the body or in the choice, a
     ``finish_reason`` other than ``stop`` (a truncated answer is not an answer),
     empty content, a body over the size cap, or a response ``model`` that is
     neither the pinned id nor the pinned id without ``:free``. Each accepted
@@ -127,13 +132,13 @@ class OpenRouterProvider:
     def provenance(self) -> str:
         seen = "; ".join(self.responses) or "none yet"
         return (f"REAL LLM OUTPUT from OpenRouter {OPENROUTER_URL} (pinned model {self.model}; "
-                f"temperature 0, reasoning effort none, max_tokens {MAX_TOKENS}; "
+                f"temperature 0, reasoning effort low (excluded), max_tokens {MAX_TOKENS}; "
                 f"responses as key=model/provider/id: {seen})")
 
     def request_body(self, prompt: bytes) -> bytes:
         return json.dumps({"model": self.model, "messages": [{"role": "user", "content": prompt.decode("utf-8")}],
                            "temperature": 0, "max_tokens": MAX_TOKENS,
-                           "reasoning": {"effort": "none"}}).encode("utf-8")
+                           "reasoning": REASONING}).encode("utf-8")
 
     def complete(self, key: str, prompt: bytes) -> str:
         if self.max_calls is not None and self.calls >= self.max_calls:

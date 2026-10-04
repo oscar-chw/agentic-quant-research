@@ -67,7 +67,8 @@
           "temperature": 0,
           "max_tokens": 8192,
           "reasoning": {
-            "effort": "none"
+            "effort": "low",
+            "exclude": true
           }
         },
         "refused_and_not_recorded": "an HTTP status other than 200 (429 is the rate limit); a top-level error or choices[0].error; a finish_reason other than stop (length included); content that is not a non-empty string; a response body over 256 KiB; a response model other than the pinned id"
@@ -216,10 +217,10 @@
         "contamination: the pinned revision is dated 2026-08-14, the Hugging Face repository was created on 2026-08-05 and OpenRouter listed the model on 2026-08-14, all before the test window starts, so the pinned weights cannot have been trained on test-window bars; this rests on OpenRouter serving that release, since it does not say which revision or quantisation it serves",
         "transport: the key comes from OPENROUTER_API_KEY, or from ~/.config/openrouter/api_key when that variable is unset, as the scripts implement it",
         "on_failure: a missing key, a 429 or another error stops live calls; the reason is recorded and the arm reported as pending",
-        "the request settings are pre-registered: temperature 0, max_tokens 8192, reasoning effort none",
+        "the request settings are pre-registered: temperature 0, max_tokens 8192, reasoning effort low with the reasoning excluded from the response",
         "retirement: if the free endpoint is gone when the critic runs, the same open weights run on another host, as a deviation; never another model"
       ],
-      "text_completed": "2026-10-05, the same day and before any LLM call, after a review (review/justify-asof-research.md, outside this repository). As first committed, this amendment left protocol.json with SHA-256 665b7c5c3c80b932fe4e878bce2265492723415bbc9d69d96460b63274cb67e7. The completion sources the dates to committed API responses (model-evidence/), adds the pinned revision's own date (2026-08-14) beside the repository's creation date, limits the contamination claim to the pinned weights and states that OpenRouter does not say which revision or quantisation it serves, and writes the key source as the scripts implement it. No rule, threshold, model or request setting changed."
+      "text_completed": "2026-10-05, the same day and before any LLM call, after a review (review/justify-asof-research.md, outside this repository). As first committed, this amendment left protocol.json with SHA-256 665b7c5c3c80b932fe4e878bce2265492723415bbc9d69d96460b63274cb67e7. The completion sources the dates to committed API responses (model-evidence/), adds the pinned revision's own date (2026-08-14) beside the repository's creation date, limits the contamination claim to the pinned weights and states that OpenRouter does not say which revision or quantisation it serves, and writes the key source as the scripts implement it. No rule, threshold or model changed. The reasoning setting changed from effort none (not offered for this model per the committed listing) to effort low with reasoning excluded, before any LLM call."
     }
   ],
   "selections_check": "selections.json's 120-row validation table was also recomputed from the raw CSVs with pandas (the method of scripts/crosscheck_real.py): max difference 1.1e-16.",

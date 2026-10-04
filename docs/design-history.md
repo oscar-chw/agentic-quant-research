@@ -62,7 +62,7 @@ change to it; earlier versions are not published:
 
 | File | Registered, last changed | SHA-256 |
 |---|---|---|
-| [results/forward-2026-09/protocol.json](../results/forward-2026-09/protocol.json) | 18:52:14, amendment 4 at 20:13:14, amendment 5 on 2026-10-05 (text completed the same day) | `dcbb325a350ed420b0eee39f851b1ea5051b112cfdc9cda14a7b374ed0fa2be7` |
+| [results/forward-2026-09/protocol.json](../results/forward-2026-09/protocol.json) | 18:52:14, amendment 4 at 20:13:14, amendment 5 on 2026-10-05 (text completed the same day) | `778ab5b408722cd8cdd6d1a596b3f394dce968b93b0fe60f585ad735bb5d4c97` |
 | [results/forward-2026-09/campaign.json](../results/forward-2026-09/campaign.json) | 18:52:14 | `3cc3c622ecb36d5a17cfe52db9389c30f44a9d87c6fdc75e96f3202d0ab0062e` |
 | [results/forward-2026-09/experiment.json](../results/forward-2026-09/experiment.json) | 18:52:14 | `f992086c2cf7119013cea013e577512b30ad394cddb968e16d6d715cbcb816c0` |
 | [results/forward-2026-09/selection-experiment.json](../results/forward-2026-09/selection-experiment.json) | amendment 1 at 19:13:42 | `8cd956dc80bc8f004ce76603106dbe534ebb390bb50d325b743d637de260fa2c` |

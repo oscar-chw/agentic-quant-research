@@ -3,8 +3,9 @@
 [protocol.json](protocol.json) was registered on 2026-10-03 at 18:52 (UTC+08:00) and
 amended four times by 20:13 the same evening (amendments 1-4, recorded in the file; 4
 is wording only), and a fifth time on 2026-10-05 (amendment 5: the model; its text was
-completed the same day, before any LLM call, with sourced dates and the key source). As
-last amended its SHA-256 is `dcbb325a350ed420b0eee39f851b1ea5051b112cfdc9cda14a7b374ed0fa2be7`; every registered
+completed the same day, before any LLM call, with sourced dates, the key source and a
+reasoning effort the model offers). As
+last amended its SHA-256 is `778ab5b408722cd8cdd6d1a596b3f394dce968b93b0fe60f585ad735bb5d4c97`; every registered
 file's digest is in the [publication history](../../docs/design-history.md#publication-history).
 All seven versions came before any LLM call and before this repository fetched any bar
 after 2026-08-31. This repository was published with fresh history, so git order is
@@ -38,7 +39,9 @@ not available to check that; the evidence is each file's SHA-256 and its date. v
   cannot have been trained on one. OpenRouter does not say which revision or quantisation
   it serves, and the model check compares only the id string, so this rests on OpenRouter
   serving that release. Requests are fixed in
-  advance: temperature 0, `max_tokens` 8192, reasoning effort none. An answer whose
+  advance: temperature 0, `max_tokens` 8192, reasoning effort low (the smallest the
+  [listing](model-evidence/openrouter-qwen38-free.json) offers; it has no "none") with the
+  reasoning excluded from the response; it still counts against `max_tokens`. An answer whose
   response `model` is not the pinned id (with or without `:free`), that was cut off, that
   carries an error, or that is empty is refused and not recorded. Each accepted response's
   model, provider and id go into the replay's provenance. If the free endpoint is retired

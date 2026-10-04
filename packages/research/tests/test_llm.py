@@ -85,7 +85,8 @@ def test_openrouter_sends_the_pinned_request_and_records_a_replayable_session(tm
     [call] = post.sent
     assert call["url"] == OPENROUTER_URL == "https://openrouter.ai/api/v1/chat/completions"
     assert call["body"] == {"model": PINNED, "messages": [{"role": "user", "content": "prompt é"}],
-                            "temperature": 0, "max_tokens": MAX_TOKENS, "reasoning": {"effort": "none"}}
+                            "temperature": 0, "max_tokens": MAX_TOKENS,
+                            "reasoning": {"effort": "low", "exclude": True}}
     assert 0 < MAX_TOKENS <= 8192 and call["timeout"] == provider.timeout
     assert call["headers"]["Authorization"] == f"Bearer {KEY}"
     provider.save(tmp_path / "session.json")
@@ -99,7 +100,7 @@ def test_openrouter_records_model_provider_and_id_but_never_the_key(tmp_path):
     assert provider.complete("propose", b"p") == "x"
     assert provider.provenance.startswith("REAL LLM OUTPUT")
     assert "propose=qwen/qwen3.8-27b/SomeHost/gen-1" in provider.provenance
-    assert "temperature 0" in provider.provenance and "reasoning effort none" in provider.provenance
+    assert "temperature 0" in provider.provenance and "reasoning effort low (excluded)" in provider.provenance
     provider.save(tmp_path / "session.json")
     saved = (tmp_path / "session.json").read_text()
     assert KEY not in saved and KEY not in provider.provenance and KEY not in repr(provider)
