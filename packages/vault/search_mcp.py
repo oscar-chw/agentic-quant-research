@@ -6,7 +6,7 @@ Exposes five tools:
   - search_papers(query, n_results)         semantic search over summaries
   - list_recent_papers(days)                papers added in last N days
   - get_paper(arxiv_id)                     full summary for a specific paper
-  - generate_alpha_ideas(topic, n_papers)   AI-generated alpha ideas from vault
+  - generate_alpha_ideas(topic, n_papers)   vault excerpts for the calling assistant to draft ideas from
   - get_vault_stats()                       total papers, date range, index size
 
 The ChromaDB index is built/updated by sync.py. This server is read-only.
@@ -183,11 +183,10 @@ def generate_alpha_ideas_text(
 ) -> str:
     """Return relevant paper excerpts for alpha idea generation.
 
-    NOTE: We deliberately do NOT spawn a claude subprocess here.
-    The MCP caller (Claude Code) is already an LLM — return the raw
-    context and let it synthesize alpha ideas directly. Spawning a
-    child claude process from inside the MCP server would create
-    uncontrolled node.js process accumulation.
+    NOTE: this server deliberately calls no model. The MCP client is
+    already an assistant: return the raw context and let it draft the
+    ideas. Spawning a model process from inside the server would let
+    child processes accumulate unchecked.
     """
     result = query_note_sources(collection, topic, n_papers, source_root=cfg["vault_path"])
     if not result["matches"]:
@@ -297,10 +296,9 @@ def build_server() -> Server:
             types.Tool(
                 name="generate_alpha_ideas",
                 description=(
-                    "Search the vault for relevant research papers and generate specific, "
-                    "implementable alpha trading ideas on a given topic using Claude AI. "
-                    "Returns 3 alpha ideas with signal construction, data requirements, "
-                    "holding period, and key risks."
+                    "Search the vault for research papers relevant to a topic and return their "
+                    "excerpts as context for drafting alpha ideas. This server calls no model; "
+                    "the calling assistant drafts the ideas."
                 ),
                 inputSchema={
                     "type": "object",
