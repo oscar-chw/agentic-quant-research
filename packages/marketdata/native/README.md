@@ -8,7 +8,7 @@ has to match it byte for byte before any timing counts. All benchmark data is
 `replay.book.reconstruct_many`.
 
 **For a Python caller, the port is ~2.3× faster than Python batch, end to end**
-(`native=True` 8.482 ms, the module alone 8.571 ms, vs 19.524 ms; conversion included). The 25.10× figure is C++ calling C++.
+(`native=True` 8.482 ms, the module alone 8.571 ms, vs 19.524 ms; conversion included). The 25.10× figure is C++ batch called from C++ against Python batch (`python_batch_over_cpp_batch`).
 This is order-book replay on a SYNTHETIC workload; it is not part of the
 repository's research loop.
 
@@ -100,7 +100,7 @@ change). Raw data: [`bench/results-2026-10-04.json`](bench/results-2026-10-04.js
 
 From Python the port is ~2.3× faster than Python batch: 2.30× through
 `native=True` and 2.27× for the module alone, two figures whose per-process
-medians overlap, so their order is noise. A C++ caller gets 25.10×. Derived by subtraction, not measured
+medians overlap, so their order is noise. A C++ caller gets 25.10× over Python batch. Derived by subtraction, not measured
 directly: of the 8.482 ms through `replay.book`, the C++ replay as timed from
 C++ is 0.777 ms, leaving 7.705 ms (90.8%) for everything on the Python side
 of the call, which includes argument validation and preparation as well as
@@ -205,7 +205,7 @@ tests/test_binding.py module vs pure Python (pytest + hypothesis)
 Lessons from what this folder records (confirmed by the author, 2026-10-03).
 
 - **Where the time goes decides what a port is worth.** A Python caller gets
-  ~2.3× over Python batch; only C++ calling C++ sees 25.10×. By subtraction,
+  ~2.3× over Python batch; only a C++ caller sees 25.10× over Python batch. By subtraction,
   7.705 of the 8.482 ms (90.8%) is spent on the Python side of the call. Source:
   [bench/results-2026-10-04.json](bench/results-2026-10-04.json) and Results above.
   The same held against the Python reference of 2026-10-03 (5.48×, 61.40×, 91%:

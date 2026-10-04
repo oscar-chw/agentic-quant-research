@@ -1,0 +1,76 @@
+{
+ "architecture": {
+  "input_modalities": [
+   "text",
+   "image",
+   "video"
+  ],
+  "instruct_type": null,
+  "modality": "text+image+video->text",
+  "output_modalities": [
+   "text"
+  ],
+  "tokenizer": "Qwen"
+ },
+ "benchmarks": {
+  "artificial_analysis": {
+   "agentic_index": 45.8,
+   "coding_index": 68.1,
+   "intelligence_index": 33.7
+  },
+  "design_arena": []
+ },
+ "canonical_slug": "qwen/qwen3.8-27b-20260814",
+ "context_length": 262144,
+ "created": 1786722910,
+ "default_parameters": {
+  "temperature": 1,
+  "top_k": 20,
+  "top_p": 0.95
+ },
+ "description": "Qwen3.8 27B is an open-weight dense vision-language model from Qwen. It is suited for coding, professional workflows, research, multimodal interaction, and long-running agent tasks, with flexible thinking that can be...",
+ "expiration_date": null,
+ "hugging_face_id": "Qwen/Qwen3.8-27B",
+ "id": "qwen/qwen3.8-27b:free",
+ "knowledge_cutoff": null,
+ "links": {
+  "details": "/api/v1/models/qwen/qwen3.8-27b-20260814/endpoints"
+ },
+ "name": "Qwen: Qwen3.8 27B (free)",
+ "per_request_limits": null,
+ "pricing": {
+  "completion": "0",
+  "prompt": "0"
+ },
+ "reasoning": {
+  "default_effort": "xhigh",
+  "default_enabled": true,
+  "mandatory": false,
+  "supported_efforts": [
+   "xhigh",
+   "medium",
+   "low"
+  ]
+ },
+ "supported_parameters": [
+  "frequency_penalty",
+  "include_reasoning",
+  "max_tokens",
+  "presence_penalty",
+  "reasoning",
+  "reasoning_effort",
+  "repetition_penalty",
+  "stop",
+  "structured_outputs",
+  "temperature",
+  "tool_choice",
+  "tools",
+  "top_p"
+ ],
+ "supported_voices": null,
+ "top_provider": {
+  "context_length": 262144,
+  "is_moderated": false,
+  "max_completion_tokens": 235929
+ }
+}

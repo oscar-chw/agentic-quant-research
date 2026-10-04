@@ -8,7 +8,7 @@ enumerate all 120 hypotheses, or draw 8 at random.
 
 **First real run, pre-registered** (34 Binance pairs; validation 2024, test 2025-01 →
 2026-08; 10 bps a side): both controls' validation winners lost money out of sample
-(−6.89 and −7.38 bps/day) and nothing was promoted ([ablation.json](results/real-2026-10/ablation.json)).
+(−6.89 and −7.38 bps/day) and neither pick was promoted ([ablation.json](results/real-2026-10/ablation.json)).
 The LLM arm has not run yet (the `claude` CLI was not signed in when v1 ran); it is registered against a forward window that closes 2027-08-31, and since amendment 5 it uses an open-weight model, Qwen3.8-27B on OpenRouter, with no Anthropic or OpenAI model.
 The git history is short because the development history is private: the [publication history](docs/design-history.md#publication-history) says why, and what evidences the pre-registration instead.
 
@@ -111,7 +111,7 @@ python3 tools/render_selection.py       # redraw the figure (needs matplotlib)
 
 With the CSVs from `scripts/fetch_binance_daily.py` (network),
 `ASOF_DATA_DIR=<dir> bash scripts/demo.sh` also verifies their checksums and recomputes
-every number independently; `scripts/real_run.sh` reruns the study.
+every number with a separate pandas script; `scripts/real_run.sh` reruns the study.
 
 ## Architecture
 
@@ -120,7 +120,7 @@ flowchart LR
   PR[Protocol, registered first;<br/>frozen control picks, SHA-256] --> FL
   D[Binance CSVs,<br/>checksum-verified] --> FL[Factor lab: run every<br/>hypothesis, recompute]
   FL --> AB[Ablation: LLM vs grid<br/>vs random-K, one gate]
-  D --> X[Independent pandas<br/>recomputation] --> AB
+  D --> X[Separate pandas<br/>recomputation] --> AB
   AB --> V[Verdict on the<br/>test split]
   subgraph Agents[LLM agents: draft only]
     P[Proposer] ~~~ C[Critic]
@@ -136,7 +136,7 @@ Loop stages: [how a hypothesis dies](docs/how-a-hypothesis-dies.md). Every packa
 - **A critic that cannot promote.** A fixed schema and a signed receipt: it can only object, and a broken critic blocks. Trade-off: false negatives, never false positives.
 - **Frozen method cards**, hashed with the data before evaluation. Trade-off: any tweak is a new card and another trial.
 - **Test sealed until the gate, in code.** Pre-gate trials run without the test rows, so a card that stops earlier never gets a test number; `verify` refuses a pre-gate trial that saw them ([how this changed](docs/design-history.md)). Trade-off: survivors run twice.
-- **Which seal applies where.** The loop seals test until its gate; the race scores all 120 trials on test, but only after every arm's pick is frozen; and in v2 the seal is the frozen selection plus order: bars from 2026-09-01 to 2026-10-03 were public at registration but not fetched here, the frozen grid and random-K picks cannot use them, the rest of the window did not exist yet, and the LLM arm's proposal call is made before this repository fetches any forward bar ([protocol.json](results/forward-2026-09/protocol.json), `splits.test`). This repository's first public push (October 2026, timestamped by GitHub) comes before that call and before nearly all of the window ([publication history](docs/design-history.md#publication-history)). The frozen card holds the full prices, so the loop's seal guards the pipeline, not the operator.
+- **Which seal applies where.** The loop seals test until its gate; the race scores all 120 trials on test, but only after every arm's pick is frozen; and in v2 the seal is the frozen selection plus order: bars from 2026-09-01 to 2026-10-03 were public at registration but not fetched here, the frozen grid and random-K picks cannot use them, the rest of the window did not exist yet, and the LLM arm's proposal call is made before this repository fetches any forward bar ([protocol.json](results/forward-2026-09/protocol.json), `splits.test`). This repository's first public push is the timestamp that matters: GitHub records it, independently of the author, so check it on GitHub; whatever follows it, such as the commit of the LLM replays made after that call, can be checked against it ([publication history](docs/design-history.md#publication-history)). The frozen card holds the full prices, so the loop's seal guards the pipeline, not the operator.
 - **Replay bound to the prompt hash.** Offline answers; a changed prompt fails loudly. Trade-off: every prompt change re-binds the cache.
 - **Point-in-time contracts.** Every price carries `available_at`. Trade-off: declared, not audited.
 - **Controls frozen before the LLM runs.** v2's grid and random-K picks are frozen in [selections.json](results/forward-2026-09/selections.json), its SHA-256 computed at publication and equal to the file as registered in the private development history ([publication history](docs/design-history.md#publication-history)). Trade-off: none can adapt later, by design.
@@ -155,7 +155,7 @@ The research path, readable in an hour:
 | [packages/research](packages/research/README.md) | `qrae-rd` (`qrae`) | LLM transport (a replay cache, or a pinned open-weight model on OpenRouter); critic broker (`codex_broker.py`, named for its first backend; it runs through that transport) |
 
 Supporting / separate experiments, not used by the study:
-- [packages/marketdata](packages/marketdata/native/README.md) (`quant-marketdata`, `replay`): point-in-time order-book replay and an opt-in C++20 port, ~2.3× from Python (2.30× through `replay.book`, 2.27× calling the module alone; their per-process medians overlap, so the gap is noise) and 25.10× C++ to C++ on a SYNTHETIC workload ([results](packages/marketdata/native/bench/results-2026-10-04.json)).
+- [packages/marketdata](packages/marketdata/native/README.md) (`quant-marketdata`, `replay`): point-in-time order-book replay and an opt-in C++20 port, ~2.3× from Python (2.30× through `replay.book`, 2.27× calling the module alone; their per-process medians overlap, so the gap is noise) and 25.10× over Python batch when called from C++ (`python_batch_over_cpp_batch`) on a SYNTHETIC workload ([results](packages/marketdata/native/bench/results-2026-10-04.json)).
 - [packages/imc-sim](packages/imc-sim/README.md) (`imc4-analysis`): IMC Prosperity 4 post-competition analysis; with the app's quote workflows, see [other experiments](docs/other-experiments.md).
 
 ## Limits

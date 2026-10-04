@@ -2,10 +2,11 @@
 
 [protocol.json](protocol.json) was registered on 2026-10-03 at 18:52 (UTC+08:00) and
 amended four times by 20:13 the same evening (amendments 1-4, recorded in the file; 4
-is wording only), and a fifth time on 2026-10-05 (amendment 5: the model). As last amended
-its SHA-256 is `665b7c5c3c80b932fe4e878bce2265492723415bbc9d69d96460b63274cb67e7`; every registered
+is wording only), and a fifth time on 2026-10-05 (amendment 5: the model; its text was
+completed the same day, before any LLM call, with sourced dates and the key source). As
+last amended its SHA-256 is `dcbb325a350ed420b0eee39f851b1ea5051b112cfdc9cda14a7b374ed0fa2be7`; every registered
 file's digest is in the [publication history](../../docs/design-history.md#publication-history).
-All six versions came before any LLM call and before this repository fetched any bar
+All seven versions came before any LLM call and before this repository fetched any bar
 after 2026-08-31. This repository was published with fresh history, so git order is
 not available to check that; the evidence is each file's SHA-256 and its date. v2 re-runs the
 [v1 comparison](../real-2026-10/README.md) with these changes:
@@ -30,9 +31,13 @@ not available to check that; the evidence is each file's SHA-256 and its date. v
 - **A pinned open-weight model.** Amendment 5 (2026-10-05) replaced `claude-opus-5-5`,
   which was never called, with `qwen/qwen3.8-27b:free` on OpenRouter: the open weights
   `Qwen/Qwen3.8-27B` at Hugging Face revision `1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0`,
-  Apache-2.0. The arm uses no Anthropic or OpenAI model. The weights were created on
-  2026-08-05 and listed on OpenRouter on 2026-08-14, both before the test window starts,
-  so the model's training data cannot contain test-window bars. Requests are fixed in
+  Apache-2.0. The arm uses no Anthropic or OpenAI model. The pinned revision is dated
+  2026-08-14, the Hugging Face repository was created on 2026-08-05 and OpenRouter listed
+  the model on 2026-08-14 ([model-evidence](model-evidence/README.md): the API responses,
+  committed). Those weights were published before any test-window bar existed, so they
+  cannot have been trained on one. OpenRouter does not say which revision or quantisation
+  it serves, and the model check compares only the id string, so this rests on OpenRouter
+  serving that release. Requests are fixed in
   advance: temperature 0, `max_tokens` 8192, reasoning effort none. An answer whose
   response `model` is not the pinned id (with or without `:free`), that was cut off, that
   carries an error, or that is empty is refused and not recorded. Each accepted response's
@@ -57,7 +62,7 @@ not available to check that; the evidence is each file's SHA-256 and its date. v
 
 | step | command | needs | status |
 |---|---|---|---|
-| 1. live smoke on the SYNTHETIC panel (≤ 3 calls), then the real proposals alone (1 call, no prices read) | `bash scripts/forward_propose.sh` | `OPENROUTER_API_KEY` | pending: not run yet |
+| 1. live smoke on the SYNTHETIC panel (≤ 3 calls), then the real proposals alone (1 call, no prices read) | `bash scripts/forward_propose.sh` | `OPENROUTER_API_KEY`, or `~/.config/openrouter/api_key` when it is unset | pending: not run yet |
 | 2. commit both REAL LLM OUTPUT replays | `git add apps/quantos/examples/loop/replay.*.json` | step 1 | pending |
 | 3. fetch bars to 2027-08-31; commit `fixtures/binance_universe_forward.json` | `scripts/fetch_binance_daily.py` | 2027-09 | pending |
 | 4. score all arms; the critic is called live (≤ 8 calls) | `STUDY=results/forward-2026-09 ASOF_DATA_DIR=<dir> bash scripts/real_run.sh --live` | steps 2 and 3 | pending |

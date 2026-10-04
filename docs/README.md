@@ -11,8 +11,8 @@ the repository outside `packages/*/docs` is listed on this page
 1. [how-a-hypothesis-dies.md](how-a-hypothesis-dies.md): the loop, run on the demo; five hypotheses, four ways to die, test sealed until the gate.
 2. [results/real-2026-10/README.md](../results/real-2026-10/README.md): the v1 study on real data, its disclosures and what carries the verdict.
 3. [protocol.json](../results/real-2026-10/protocol.json): what was fixed before the first run (registered 2026-10-03 18:10 UTC+08:00, six minutes before the run; SHA-256 `6bc1e31d934c657ede178f86b439f3b894351ce3fb8680f6d7c2e02cf903cb16`). Git order is not public: see the [publication history](design-history.md#publication-history).
-4. [crosscheck_real.py](../scripts/crosscheck_real.py): the independent pandas recomputation of all 962 reported numbers.
-5. [results/forward-2026-09/README.md](../results/forward-2026-09/README.md): protocol v2, its five amendments, its frozen controls and its stated power.
+4. [crosscheck_real.py](../scripts/crosscheck_real.py): a separate pandas recomputation of all 962 reported numbers, without the factor lab.
+5. [results/forward-2026-09/README.md](../results/forward-2026-09/README.md): protocol v2, its five amendments, its frozen controls, the [model evidence](../results/forward-2026-09/model-evidence/README.md) and its stated power.
 6. [design-history.md](design-history.md): the order in which the rules were fixed, and why; why this repository's history starts at publication, and the SHA-256 of every registered file.
 
 **2. LLM-safety reviewer: can the model move a number?**
@@ -22,7 +22,7 @@ the repository outside `packages/*/docs` is listed on this page
 4. [validate_envelope.py](../tools/agent-review/validate_envelope.py): refuses a run summary that overclaims or asks for authority.
 
 **3. Quant developer: the supporting packages** (separate from the study)
-1. [packages/marketdata/native/README.md](../packages/marketdata/native/README.md): the Python replay module ([replay/book.py](../packages/marketdata/replay/book.py)) and its C++20 port, ~2.3× for a Python caller and 25.10× C++ to C++, with byte-identical parity on a SYNTHETIC workload ([results-2026-10-04.json](../packages/marketdata/native/bench/results-2026-10-04.json)).
+1. [packages/marketdata/native/README.md](../packages/marketdata/native/README.md): the Python replay module ([replay/book.py](../packages/marketdata/replay/book.py)) and its C++20 port, ~2.3× for a Python caller and 25.10× over Python batch when called from C++, with byte-identical parity on a SYNTHETIC workload ([results-2026-10-04.json](../packages/marketdata/native/bench/results-2026-10-04.json)).
 2. [evidence/replay-benchmark.json](evidence/replay-benchmark.json): the benchmark workload's parameters and the two digests every implementation reproduces, with a note on the timing it held until 2026-10-04.
 3. [engineering-case-study.md](engineering-case-study.md): the decisions above, and when to revisit them.
 
