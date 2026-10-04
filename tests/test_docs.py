@@ -101,7 +101,8 @@ def test_registered_files_match_their_recorded_sha256():
 COMMIT = re.compile(r"(?<![\w.\-…])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{7,40}(?![\w.\-…])")
 HEX_ALPHABET = "0123456789abcdef"  # a hex-digit check in code, not a hash
 PUBLIC_UPSTREAM = {"0094c681f8cd019889761e6431a1a47ea151aaa8",  # nabayansaha/imc-prosperity-4-backtester
-                   "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"}  # huggingface.co/Qwen/Qwen3.8-27B
+                   "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",  # huggingface.co/Qwen/Qwen3.8-27B
+                   "fea7780"}  # hihihhi/alpha-gp-lab: 2eeb94a as re-issued on 2026-10-04 (same tree and date)
 # Names of artefacts that were never published: a reader cannot follow them.
 UNPUBLISHED = re.compile(r"quantos release|probe receipt|batch-0\d", re.I)
 SKIP_DIRS = {"build", ".hypothesis", "__pycache__", ".pytest_cache"}
