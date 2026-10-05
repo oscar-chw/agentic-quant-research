@@ -1,4 +1,4 @@
-> Package reference. Start at the [root README](../../README.md); the [docs index](../../docs/README.md) has reading paths.
+> Package reference. Start at the [root README](../../README.md); the [docs index](../../docs/README.md) lists every page.
 
 # Market-Making Lab: quote simulator and run diagnostics
 

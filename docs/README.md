@@ -1,51 +1,88 @@
 # Docs index
 
-Start at the [root README](../README.md): the question, the result, the figure and
-the demo. Then pick the path that matches why you are here. Every Markdown file in
-the repository outside `packages/*/docs` is listed on this page
-([tests/test_docs.py](../tests/test_docs.py) checks that).
+Start at the [root README](../README.md): the question, the result, the figure and the demo.
+This page lists every Markdown page in the repository, grouped by what you want to do
+([tests/test_docs.py](../tests/test_docs.py) checks that none is missing).
 
-## Three reading paths
+Three short paths: **researchers** read *Understand it* top to bottom, then the two study READMEs;
+**LLM-safety reviewers** start at "Can the model move a number?" under *Check the evidence*;
+**quant developers** go to *Packages*.
 
-**1. The research question: can an LLM beat brute force under one honest gate?** (about an hour)
-1. [how-a-hypothesis-dies.md](how-a-hypothesis-dies.md): the loop, run on the demo; five hypotheses, four ways to die, test sealed until the gate.
-2. [results/real-2026-10/README.md](../results/real-2026-10/README.md): the v1 study on real data, its disclosures and what carries the verdict.
-3. [protocol.json](../results/real-2026-10/protocol.json): what was fixed before the first run (registered 2026-10-03 18:10 UTC+08:00, six minutes before the run; SHA-256 `6bc1e31d934c657ede178f86b439f3b894351ce3fb8680f6d7c2e02cf903cb16`). Git order is not public: see the [publication history](design-history.md#publication-history).
-4. [crosscheck_real.py](../scripts/crosscheck_real.py): a separate pandas recomputation of all 962 reported numbers, without the factor lab.
-5. [results/forward-2026-09/README.md](../results/forward-2026-09/README.md): protocol v2, its five amendments, its frozen controls, the [model evidence](../results/forward-2026-09/model-evidence/README.md) and its stated power.
-6. [design-history.md](design-history.md): the order in which the rules were fixed, and why; why this repository's history starts at publication, and the SHA-256 of every registered file.
+## Understand it
 
-**2. LLM-safety reviewer: can the model move a number?**
-1. [loop.py](../apps/quantos/src/quantos_showcase/loop.py), lines 1–15: what each agent may and may not do.
-2. [codex_broker.py](../packages/research/src/qrae/codex_broker.py): the bounded critic broker (named for its first backend; here it runs through the LLM transport). Fixed schema, no state transition, a signed receipt.
-3. [llm.py](../packages/research/src/qrae/llm.py): the transport, a replay cache bound to each prompt's SHA-256, and the pinned live model: open weights on OpenRouter, no Anthropic or OpenAI model.
-4. [validate_envelope.py](../tools/agent-review/validate_envelope.py): refuses a run summary that overclaims or asks for authority.
+| Page | What it answers |
+|---|---|
+| [how-a-hypothesis-dies.md](how-a-hypothesis-dies.md) | How does the loop treat a hypothesis? Five demo hypotheses, four ways to die, test sealed until the gate. |
+| [diagrams.md](diagrams.md) | What does each part look like? Eight numbered diagrams: the harness, the pre-registration timeline, v1 against v2 windows, the loop's states, the LLM transport, the replay parity check, the factor lab and imc-sim. |
+| [architecture.md](architecture.md) | Which package owns what, what evidence each has, what is missing, and their distribution and import names. |
+| [design-decisions.md](design-decisions.md) | What does each design decision buy and cost, and which seal applies where? |
+| [engineering-case-study.md](engineering-case-study.md) | Which engineering decisions shaped the packages, and when should they be revisited? |
+| [other-experiments.md](other-experiments.md) | What did the quote-imbalance and inventory-aware quoting experiments show? Both SYNTHETIC, both negative. |
+| [quote-imbalance-walkthrough.md](quote-imbalance-walkthrough.md) | What does the optional `demo.sh --quotes` run do, step by step? |
 
-**3. Quant developer: the supporting packages** (separate from the study)
-1. [packages/marketdata/native/README.md](../packages/marketdata/native/README.md): the Python replay module ([replay/book.py](../packages/marketdata/replay/book.py)) and its C++20 port, ~2.3× for a Python caller and 25.10× over Python batch when called from C++, with byte-identical parity on a SYNTHETIC workload ([results-2026-10-04.json](../packages/marketdata/native/bench/results-2026-10-04.json)).
-2. [evidence/replay-benchmark.json](evidence/replay-benchmark.json): the benchmark workload's parameters and the two digests every implementation reproduces, with a note on the timing it held until 2026-10-04.
-3. [engineering-case-study.md](engineering-case-study.md): the decisions above, and when to revisit them.
+## Check the evidence
 
-## Everything else
+| Page | What it answers |
+|---|---|
+| [results/real-2026-10/README.md](../results/real-2026-10/README.md) | What did protocol v1 find on REAL data, what was disclosed, and what carries the verdict? |
+| [results/real-2026-10/REPORT.md](../results/real-2026-10/REPORT.md) | The v1 run's generated report, never rewritten. |
+| [results/real-2026-10/protocol.json](../results/real-2026-10/protocol.json) | What was fixed before v1's first run? |
+| [scripts/crosscheck_real.py](../scripts/crosscheck_real.py) | Do the reported numbers hold without the factor lab? A separate pandas recomputation of all 962. |
+| [results/forward-2026-09/README.md](../results/forward-2026-09/README.md) | What does protocol v2 fix, which controls are frozen, and how much power does it have? |
+| [results/forward-2026-09/protocol.json](../results/forward-2026-09/protocol.json) | What v2 registered, including its five amendments. |
+| [results/forward-2026-09/DEVIATIONS.md](../results/forward-2026-09/DEVIATIONS.md) | Has anything departed from protocol v2? Dated entries; none changes a rule, a threshold or a frozen selection. |
+| [results/forward-2026-09/model-evidence/README.md](../results/forward-2026-09/model-evidence/README.md) | Where do the LLM arm's model release dates, licence and listing come from? |
+| [design-history.md](design-history.md) | In what order were the rules fixed, and why? Why the public history starts at publication, and the SHA-256 of every registered file. |
+| [evidence/selection.json](evidence/selection.json) | The numbers behind the README figure (POST-HOC). |
+| [evidence/replay-benchmark.json](evidence/replay-benchmark.json) | The replay benchmark's workload and the two digests every implementation reproduces. |
+| Can the model move a number? [loop.py](../apps/quantos/src/quantos_showcase/loop.py) (lines 1–15), [codex_broker.py](../packages/research/src/qrae/codex_broker.py), [llm.py](../packages/research/src/qrae/llm.py), [validate_envelope.py](../tools/agent-review/validate_envelope.py) | What each agent may do; the critic's fixed schema and signed receipt; the replay cache bound to each prompt's SHA-256 and the pinned open-weight model; the validator that refuses an overclaiming run summary. |
 
-**Top-level docs**
-- [architecture.md](architecture.md): every package, what it owns, its evidence and what is missing.
-- [DIAGRAMS.md](DIAGRAMS.md): the numbered diagrams: the harness, the pre-registration timeline, v1 against v2 windows, the loop's states, the LLM transport, the replay parity check, the factor lab and imc-sim.
-- [other-experiments.md](other-experiments.md): the quote-imbalance and inventory-aware quoting experiments, both SYNTHETIC, both negative.
-- [quote-imbalance-walkthrough.md](quote-imbalance-walkthrough.md): the optional `demo.sh --quotes` run, step by step.
+## Packages
 
-**Study records**
-- [results/real-2026-10/REPORT.md](../results/real-2026-10/REPORT.md): the v1 run's generated report, never rewritten.
-- [results/forward-2026-09/DEVIATIONS.md](../results/forward-2026-09/DEVIATIONS.md): dated departures from protocol v2; none changes a rule, a threshold or a frozen selection.
+Each package's README first, then its own `docs/` pages. The package docs keep their original
+UPPERCASE names because links and tests point at them.
 
-**Package references** (each package's own README, then its `docs/` folder)
-- [packages/research](../packages/research/README.md): `qrae`, work orders, the point-in-time catalog, the broker and the LLM transport. Template: [historical source](../packages/research/examples/historical_source/README.md).
-- [packages/factor](../packages/factor/README.md): the factor lab, point-in-time panels, rank IC and costs.
-- [packages/vault](../packages/vault/README.md): note eligibility, retrieval and method cards.
-- [packages/marketdata/native](../packages/marketdata/native/README.md): the Python replay module (`replay`) and the opt-in C++ replay path.
-- [packages/imc-sim](../packages/imc-sim/README.md): IMC Prosperity 4 post-competition analysis; its [event contract](../packages/imc-sim/CONTRACT.md) and [import example](../packages/imc-sim/examples/community-log/README.md).
-- [apps/quantos](../apps/quantos/README.md): the application. Its workflow guides: [execution](../apps/quantos/docs/execution-workflow.md), [persisted execution](../apps/quantos/docs/persisted-execution.md), [feed](../apps/quantos/docs/feed-workflow.md), [quotes](../apps/quantos/docs/quote-workflow.md), [methods](../apps/quantos/docs/method-workflow.md) and [run index](../apps/quantos/docs/run-index.md).
+| Page | What it answers |
+|---|---|
+| [apps/quantos/README.md](../apps/quantos/README.md) | The application: the loop, the ablation and the other workflows built on the packages. |
+| [apps/quantos/docs/execution-workflow.md](../apps/quantos/docs/execution-workflow.md) | How to run and inspect the native quote strategy. |
+| [apps/quantos/docs/persisted-execution.md](../apps/quantos/docs/persisted-execution.md) | How to pause, resume and inspect the same quote study. |
+| [apps/quantos/docs/feed-workflow.md](../apps/quantos/docs/feed-workflow.md) | How an archived feed becomes reproducible research input. |
+| [apps/quantos/docs/quote-workflow.md](../apps/quantos/docs/quote-workflow.md) | How quote features keep their event, received and available clocks. |
+| [apps/quantos/docs/method-workflow.md](../apps/quantos/docs/method-workflow.md) | How a reading note becomes a testable, source-backed method. |
+| [apps/quantos/docs/run-index.md](../apps/quantos/docs/run-index.md) | How one index replays each workflow's numbers with its owning package and links the reports. |
+| [packages/factor/README.md](../packages/factor/README.md) | The factor lab: momentum against reversal from your own price CSV. |
+| [packages/factor/docs/IMPORT_CONTRACT.md](../packages/factor/docs/IMPORT_CONTRACT.md) | What a price CSV and its contract must declare. |
+| [packages/factor/docs/ARCHITECTURE.md](../packages/factor/docs/ARCHITECTURE.md) | Which module does what inside the factor lab. |
+| [packages/factor/docs/INDEPENDENT_CALCULATIONS.md](../packages/factor/docs/INDEPENDENT_CALCULATIONS.md) | Hand-checkable arithmetic and timing cases for ranks, costs and clocks. |
+| [packages/factor/docs/ALLOCATION.md](../packages/factor/docs/ALLOCATION.md) | How factor scores become holdings and trades. |
+| [packages/factor/docs/MEASUREMENTS.md](../packages/factor/docs/MEASUREMENTS.md) | Historical v0.1.0 throughput on SYNTHETIC panels. |
+| [packages/vault/README.md](../packages/vault/README.md) | Paper notes: which count as evidence, retrieval and method cards. |
+| [packages/research/README.md](../packages/research/README.md) | `qrae`: work orders, the point-in-time catalog, the critic broker and the LLM transport. |
+| [packages/research/docs/portfolio-architecture.md](../packages/research/docs/portfolio-architecture.md) | A walkthrough of the `qrae` source, its quant decisions and missing interfaces. |
+| [packages/research/docs/ARCHITECTURE.md](../packages/research/docs/ARCHITECTURE.md) | Who owns which decision: data, validators or humans. |
+| [packages/research/docs/LOCAL_KERNEL.md](../packages/research/docs/LOCAL_KERNEL.md) | The first executable slice: one baseline, one immutable run contract. |
+| [packages/research/docs/HISTORICAL_DATA.md](../packages/research/docs/HISTORICAL_DATA.md) | The intake contract for historical price bars. |
+| [packages/research/examples/historical_source/README.md](../packages/research/examples/historical_source/README.md) | A template for that intake manifest. |
+| [packages/marketdata/native/README.md](../packages/marketdata/native/README.md) | The Python order-book replay module and its opt-in C++20 port: parity first, then timing (SYNTHETIC). |
+| [packages/imc-sim/README.md](../packages/imc-sim/README.md) | The Market-Making Lab: IMC Prosperity 4 post-competition quote simulator and diagnostics. |
+| [packages/imc-sim/CONTRACT.md](../packages/imc-sim/CONTRACT.md) | The normalized event contract the analyzer reads. |
+| [packages/imc-sim/docs/QUOTE_POLICY.md](../packages/imc-sim/docs/QUOTE_POLICY.md) | The inventory-aware quote policy and its controlled execution study. |
+| [packages/imc-sim/docs/QUOTE_STUDY_RESULTS.md](../packages/imc-sim/docs/QUOTE_STUDY_RESULTS.md) | What the frozen SYNTHETIC quote study shows. |
+| [packages/imc-sim/docs/BOUNDARY_STATE.md](../packages/imc-sim/docs/BOUNDARY_STATE.md) | The complete-step state and in-memory restoration. |
+| [packages/imc-sim/docs/PERSISTED_EXECUTION.md](../packages/imc-sim/docs/PERSISTED_EXECUTION.md) | The persisted SYNTHETIC execution workflow. |
+| [packages/imc-sim/docs/PERSISTENCE_FILESYSTEM_REPAIR.md](../packages/imc-sim/docs/PERSISTENCE_FILESYSTEM_REPAIR.md) | How filesystem admission was repaired after two ownership failures. |
+| [packages/imc-sim/docs/COMMUNITY_IMPORT.md](../packages/imc-sim/docs/COMMUNITY_IMPORT.md) | How to import one saved community-backtester log. |
+| [packages/imc-sim/docs/UPSTREAM_FORMAT.md](../packages/imc-sim/docs/UPSTREAM_FORMAT.md) | Which upstream files were inspected, at which revision, and what was not reused. |
+| [packages/imc-sim/examples/community-log/README.md](../packages/imc-sim/examples/community-log/README.md) | An original SYNTHETIC import case. |
 
-**Example inputs** (hand-written fixtures, not research findings)
-- The demo vault's five paraphrase notes: [Jegadeesh–Titman 1993](../apps/quantos/examples/loop/vault/jegadeesh-titman-1993.md), [Jegadeesh 1990](../apps/quantos/examples/loop/vault/jegadeesh-1990.md), [Lehmann 1990](../apps/quantos/examples/loop/vault/lehmann-1990.md), [Moskowitz–Ooi–Pedersen 2012](../apps/quantos/examples/loop/vault/moskowitz-ooi-pedersen-2012.md), [Cont–Kukanov–Stoikov 2014](../apps/quantos/examples/loop/vault/cont-kukanov-stoikov-2014.md).
-- The quote method's [derivation](../apps/quantos/examples/methods/derivation.md) and the execution study's [source note](../apps/quantos/examples/execution/source.md).
+## Reference
+
+Hand-written example inputs, not research findings.
+
+| Page | What it answers |
+|---|---|
+| [Jegadeesh–Titman 1993](../apps/quantos/examples/loop/vault/jegadeesh-titman-1993.md), [Jegadeesh 1990](../apps/quantos/examples/loop/vault/jegadeesh-1990.md), [Lehmann 1990](../apps/quantos/examples/loop/vault/lehmann-1990.md), [Moskowitz–Ooi–Pedersen 2012](../apps/quantos/examples/loop/vault/moskowitz-ooi-pedersen-2012.md), [Cont–Kukanov–Stoikov 2014](../apps/quantos/examples/loop/vault/cont-kukanov-stoikov-2014.md) | The demo vault's five paraphrase notes the proposer retrieves. |
+| [derivation.md](../apps/quantos/examples/methods/derivation.md) | The quote method's original local derivation. |
+| [source.md](../apps/quantos/examples/execution/source.md) | The execution study's reading note. |
+| [evidence/demo.json](evidence/demo.json) | The quote-imbalance method trial's native result (SYNTHETIC), cited by [other-experiments.md](other-experiments.md). |

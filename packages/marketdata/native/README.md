@@ -1,9 +1,11 @@
+> Package reference. Start at the [root README](../../../README.md); the [docs index](../../../docs/README.md) lists every page.
+
 # replay-native: C++20 order-book replay
 
-A C++20 port of point-in-time book reconstruction: the scalar `reconstruct`
-and the one-sweep batch `reconstruct_many`. The Python module
-[`replay.book`](../replay/book.py) is the reference implementation. The port
-has to match it byte for byte before any timing counts. All benchmark data is
+Rebuilds the order book as it stood at each moment from recorded messages, in C++20.
+It ports the Python reference [`replay.book`](../replay/book.py) and has to match it byte for byte before any timing counts.
+
+The port covers the scalar `reconstruct` and the one-sweep batch `reconstruct_many`. All benchmark data is
 **SYNTHETIC**. A pybind11 module exposes it to Python as an opt-in path of
 `replay.book.reconstruct_many`.
 

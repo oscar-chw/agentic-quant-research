@@ -1,8 +1,8 @@
-> Package reference. Start at the [root README](../../README.md); the [docs index](../../docs/README.md) has reading paths.
+> Package reference. Start at the [root README](../../README.md); the [docs index](../../docs/README.md) lists every page.
 
 # Research evidence core
 
-Installable SQLite metadata, source eligibility, offline note retrieval and source-backed method contracts. The QuantOS application in `apps/quantos` consumes these directly.
+The research loop's paper notes and method cards: it decides which notes count as evidence, retrieves them offline for the proposer, and validates the method cards that fix a rule before it is tested. Installable, with SQLite metadata; the QuantOS application in `apps/quantos` consumes it directly.
 
 - `source_access.py` decides whether a note is eligible evidence (digest-matched, current, inside the source root) and keeps backend errors distinct from empty results.
 - `note_index.py` is a standard-library term-overlap backend for `query_note_sources`; it reads `id:`/`title:`-headed Markdown notes. Retrieval quality is not evaluated.

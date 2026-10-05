@@ -51,6 +51,23 @@ replay cache by default, or a pinned open-weight model (`qwen/qwen3.8-27b:free`)
 | `packages/imc-sim` | Post-competition IMC Prosperity 4 analysis: inventory-aware quoting, matching, accounting, persisted runs | Synthetic quote studies and recovery tests | Official engine parity; observed inputs |
 | `apps/quantos` | The research loop, the LLM-vs-grid-vs-random ablation (`ablation.py`), quote method trials, execution wrapper and run index | End-to-end demo and verify commands; the pre-registered real-data ablation's grid and random arms | The ablation's LLM arm: not run yet (protocol v2 scores it on 2026-09-01 → 2027-08-31) |
 
+## Distributions and import names
+
+Names predate the study; protocol v2 names `quantos_showcase.ablation`, so nothing is renamed before 2027-09.
+
+The research path, readable in an hour:
+
+| Path | Distribution (import) | Owns |
+|---|---|---|
+| [apps/quantos](../apps/quantos/README.md) | `quantos-showcase` (`quantos_showcase`) | The loop ([loop.py](../apps/quantos/src/quantos_showcase/loop.py)) and the ablation ([ablation.py](../apps/quantos/src/quantos_showcase/ablation.py)) |
+| [packages/factor](../packages/factor/README.md) | `offline-factor-research` (`factor_research`) | Point-in-time panels, rank IC, costs |
+| [packages/vault](../packages/vault/README.md) | `quant-paper-store` (flat modules) | Notes, retrieval, method cards |
+| [packages/research](../packages/research/README.md) | `qrae-rd` (`qrae`) | LLM transport (a replay cache, or a pinned open-weight model on OpenRouter); critic broker (`codex_broker.py`, named for its first backend; it runs through that transport) |
+
+Supporting / separate experiments, not used by the study:
+- [packages/marketdata](../packages/marketdata/native/README.md) (`quant-marketdata`, `replay`): point-in-time order-book replay and an opt-in C++20 port, ~2.3× from Python (2.30× through `replay.book`, 2.27× calling the module alone; their per-process medians overlap, so the gap is noise) and 25.10× over Python batch when called from C++ (`python_batch_over_cpp_batch`) on a SYNTHETIC workload ([results](../packages/marketdata/native/bench/results-2026-10-04.json)).
+- [packages/imc-sim](../packages/imc-sim/README.md) (`imc4-analysis`): IMC Prosperity 4 post-competition analysis; with the app's quote workflows, see [other experiments](other-experiments.md).
+
 ## Design rules
 
 - **Freeze before evaluating.** A method card and its data are hashed and
