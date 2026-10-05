@@ -1,9 +1,6 @@
 """Native persisted-state invariants; exhaustive/fault receipts are external."""
-from contextlib import ExitStack
-import copy
 import hashlib
 from importlib.resources import files
-import json
 from pathlib import Path
 import selectors
 import sqlite3
@@ -65,7 +62,7 @@ class PersistenceTests(unittest.TestCase):
                    lambda s:s.update(cash='1100.6'),lambda s:s['live'][0].update(remaining_units=2)]
         for i,change in enumerate(mutations):
             with self.subTest(kind=i):
-                name=f'a{i}';result=p.run(raw(),self.store,name,stop_after_commits=68);root=self.store/name
+                name=f'a{i}';p.run(raw(),self.store,name,stop_after_commits=68);root=self.store/name
                 with sqlite3.connect(root/'journal.sqlite',isolation_level=None) as c:
                     g,rid,tick,prev,digest,st,tr,eh=c.execute('SELECT * FROM steps ORDER BY g DESC LIMIT 1').fetchone()
                     state=j.decode(st,8192);change(state);st=j.blob(state,8192)

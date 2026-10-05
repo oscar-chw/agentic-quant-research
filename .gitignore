@@ -12,3 +12,4 @@ dist/
 .env*
 data/
 packages/marketdata/native/build/
+.ruff_cache/

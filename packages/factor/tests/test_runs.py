@@ -1,11 +1,9 @@
-import hashlib
 import json
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
 
-from factor_research.cli import main
 from factor_research.runs import list_trials, run_trial, verify_run
 from factor_research.synthetic import make_fixture
 

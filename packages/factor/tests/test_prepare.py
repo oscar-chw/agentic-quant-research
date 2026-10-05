@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from factor_research.artifacts import json_bytes, sha
+from factor_research.artifacts import json_bytes
 from factor_research.contracts import read_config, read_panel
 from factor_research.evaluator import evaluate
 from factor_research.prepare import convert_prices, load_prepared, parse_clock, prepare_prices, validate_prepared

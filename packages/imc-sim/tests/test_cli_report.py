@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 
 from imc4_analysis.analyzer import analyze
-from imc4_analysis.cli import main, write_report, _write_exclusive
+from imc4_analysis.cli import main, _write_exclusive
 from imc4_analysis.report import render
 from test_analyzer import demo, records, packed
 

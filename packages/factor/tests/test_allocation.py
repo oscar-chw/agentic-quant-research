@@ -1,4 +1,3 @@
-import copy
 from fractions import Fraction
 import json
 import math

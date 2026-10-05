@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, timezone
 from fractions import Fraction
 import io
 import json
-import math
 import unittest
 
 from factor_research.contracts import read_config, read_panel

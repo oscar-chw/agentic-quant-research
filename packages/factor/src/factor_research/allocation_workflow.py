@@ -1,5 +1,4 @@
 """A bounded one-period scenario adapter over a verified research experiment."""
-import json
 import math
 from pathlib import Path
 import statistics

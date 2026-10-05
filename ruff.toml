@@ -1,0 +1,9 @@
+# Correctness-only lint (syntax errors, pyflakes). Style is not enforced: README evidence cites line numbers.
+[lint]
+select = ["E9", "F"]
+
+# imc4_analysis source is frozen: apps/quantos pins its SHA-256 code identity (execution.py IMC_CODE),
+# so these two files keep their bytes; the unused names are recorded here instead of edited.
+[lint.per-file-ignores]
+"packages/imc-sim/src/imc4_analysis/cli.py" = ["F841"]
+"packages/imc-sim/src/imc4_analysis/persistence.py" = ["F401"]

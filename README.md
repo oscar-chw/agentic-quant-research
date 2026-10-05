@@ -1,5 +1,7 @@
 # asof-research
 
+[![ci](https://github.com/hihihhi/asof-research/actions/workflows/ci.yml/badge.svg)](https://github.com/hihihhi/asof-research/actions/workflows/ci.yml) [![lint](https://github.com/hihihhi/asof-research/actions/workflows/lint.yml/badge.svg)](https://github.com/hihihhi/asof-research/actions/workflows/lint.yml)
+
 **Can an LLM pick better trading hypotheses than brute force?** asof-research is a
 point-in-time ("as-of") harness built to answer that without trusting the LLM: every
 hypothesis is frozen before it is scored, every number is computed by code the model
