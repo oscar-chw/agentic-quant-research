@@ -10,21 +10,21 @@ This map describes the inspected implementation. The broader [architecture](ARCH
 
 ```mermaid
 flowchart TD
-    CSV[Local four-column price CSV] --> WO[Hash-bound work order]
-    CSV --> IMP[Offline price or historical import]
-    IMP --> CAT[SQLite catalog + immutable objects]
+    CSV[Local four-column price CSV] -->|dataset hash| WO[Hash-bound work order]
+    CSV -->|price rows| IMP[Offline price or historical import]
+    IMP -->|normalized prices| CAT[SQLite catalog + immutable objects]
     CAT -->|optional schema 1.1 binding| WO
-    WO --> K[Kernel: validate and freeze inputs]
-    K --> B[Lagged momentum + linear costs]
-    B --> S[Chronological train / validation / test]
-    S --> R[Persist returns and recompute metrics]
-    R --> A[Manifest + state log + report + claims]
-    A --> H[HUMAN_REVIEW at E0]
+    WO -->|validated order| K[Kernel: validate and freeze inputs]
+    K -->|frozen prices| B[Lagged momentum + linear costs]
+    B -->|net returns| S[Chronological train / validation / test]
+    S -->|split returns| R[Persist returns and recompute metrics]
+    R -->|recomputed metrics| A[Manifest + state log + report + claims]
+    A -->|stops at| H[HUMAN_REVIEW at E0]
     K -->|data admission failure| Q[QUARANTINED]
     A -. optional bounded task .-> D[Codex draft and authenticated receipt]
-    D --> RV[Separate verified review bundle]
-    PM[Bounded Gamma metadata fetch] --> CAT
-    OLD[Committed legacy snapshots] --> WEB[Existing web/API review surface]
+    D -->|verified receipt| RV[Separate verified review bundle]
+    PM[Bounded Gamma metadata fetch] -->|market metadata| CAT
+    OLD[Committed legacy snapshots] -->|read by| WEB[Existing web/API review surface]
 ```
 
 The Gamma adapter stores market metadata, not a historical price series for the baseline. The web surface reads committed examples rather than the kernel's output directory. These are separate paths in the current implementation, not steps already connected by the diagram.

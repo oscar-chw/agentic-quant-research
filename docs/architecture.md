@@ -9,25 +9,34 @@ decides what survives.
 ```mermaid
 flowchart TB
   subgraph Agents[LLM agents: draft only]
-    P[Proposer: K hypotheses, each citing a vault note]
-    C[Adversarial critic: may object, cannot set metrics]
+    P[Proposer:<br/>K hypotheses, each<br/>citing a vault note]
+    C[Adversarial critic:<br/>may object, cannot<br/>set metrics]
   end
   subgraph Loop[apps/quantos: research loop]
-    F[Freeze: method card fixes signal, splits, cost, rule]
-    T[Test: factor lab prepare, run, verify --recompute]
-    G[Human gate: promote or reject]
+    F[Freeze: method card<br/>fixes signal, splits,<br/>cost, rule]
+    T[Test: factor lab<br/>prepare, run,<br/>verify --recompute]
+    G[Human gate:<br/>promote or reject]
   end
-  V[packages/vault: notes, eligibility, method cards] --> P
-  P --> F --> T --> C --> G
-  D[packages/factor: point-in-time panels, rank IC, cost sleeves] --> T
-  O[Daily OHLCV directory or synthetic fixture] --> D
-  B[packages/research qrae: bounded broker, HMAC receipts, replay cache] -. transport .-> P
+  V[packages/vault:<br/>notes, eligibility,<br/>method cards] -->|retrieved notes| P
+  P -->|valid drafts| F
+  F -->|frozen card| T
+  T -->|passes on validation| C
+  C -->|no objection| G
+  O[Daily OHLCV directory<br/>or synthetic fixture] -->|daily bars| D[packages/factor:<br/>point-in-time panels,<br/>rank IC, cost sleeves]
+  D -->|scored trials| T
+  B[packages/research qrae:<br/>bounded broker, HMAC<br/>receipts, replay cache] -. transport .-> P
   B -. transport .-> C
-  M[packages/marketdata: coverage-aware book replay] --> Q[apps/quantos: quote feature and method trials]
-  B --> Q
-  I[packages/imc-sim: inventory-aware quoting, fills, persistence] --> X[apps/quantos: execution and run index]
-  D --> X
-  Q --> X
+```
+
+The other workflows in `apps/quantos` compose the same packages:
+
+```mermaid
+flowchart TB
+  M[packages/marketdata:<br/>coverage-aware book replay] -->|replayed books| Q[apps/quantos: quote feature<br/>and method trials]
+  B[packages/research qrae] -->|quote features, workflow| Q
+  I[packages/imc-sim: inventory-aware<br/>quoting, fills, persistence] -->|quote study runs| X[apps/quantos:<br/>execution and run index]
+  D[packages/factor] -->|factor trials| X
+  Q -->|quote trials| X
 ```
 
 Solid arrows are implemented calls. Dotted arrows mark the LLM transport: a

@@ -13,12 +13,12 @@ performance scale. Each retains its own units.
 
 ```mermaid
 flowchart TB
-    A[QuantOS raw-feed experiment] --> I[QuantOS native-run index]
-    C[IMC 4 imported analysis bundle] --> I
-    D[Factor trial: success or failure] --> I
-    I --> R[Native reports and qualifications]
-    I --> S[Checked input and artifact hashes]
-    I --> M[Installed method implementation]
+    A[QuantOS raw-feed experiment] -->|replayed by its package| I[QuantOS native-run index]
+    C[IMC 4 imported analysis bundle] -->|replayed by its package| I
+    D[Factor trial: success or failure] -->|replayed by its package| I
+    I -->|links| R[Native reports and qualifications]
+    I -->|checks| S[Checked input and artifact hashes]
+    I -->|links| M[Installed method implementation]
 ```
 
 ## Run the three-home example

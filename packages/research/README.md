@@ -21,14 +21,14 @@ Active research harness. **No headline performance result; the deliverable is th
 - The optional Codex broker accepts a bounded read-only task, then HMAC-signs a result receipt using a key stored outside the workspace; ingestion cannot change metrics, research state, capital, or execution authority.
 
 ```mermaid
-flowchart LR
-    A[Work order<br/>dataset hash + cutoff] --> C[Deterministic kernel<br/>chronological split + costs]
-    B[Optional point-in-time catalog<br/>schema 1.1 provenance] --> C
-    C --> D[Run manifest<br/>metrics + hash-linked state]
-    D --> E[Offline verification]
+flowchart TB
+    A[Work order<br/>dataset hash + cutoff] -->|validated order| C[Deterministic kernel<br/>chronological split + costs]
+    B[Optional point-in-time catalog<br/>schema 1.1 provenance] -->|as-of snapshot| C
+    C -->|persisted returns, state| D[Run manifest<br/>metrics + hash-linked state]
+    D -->|hashes to replay| E[Offline verification]
     D -. bounded draft request .-> F[Read-only Codex broker]
-    F --> G[HMAC receipt<br/>no state-transition authority]
-    G --> E
+    F -->|signs the result| G[HMAC receipt<br/>no state-transition authority]
+    G -->|receipt to check| E
 ```
 
 ## The interesting decision

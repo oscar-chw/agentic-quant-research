@@ -7,14 +7,14 @@ The research loop (`quantos-loop`, [loop.py](src/quantos_showcase/loop.py)) and 
 Inspect a price experiment from its archived source messages through coverage-aware book replay, costs, validation and eligible reading notes. This offline application connects three maintained components through installed packages: the replay feed's recorded history becomes QRAE input, and the research vault supplies a source citation to the resulting review report.
 
 ```mermaid
-flowchart LR
-    A[Synthetic raw messages and two clocks] --> B[Replay feed and hashed JSONL history]
-    B --> C[Covered book replay]
-    C --> D[Midpoint CSV and derivation hashes]
-    D --> E[QRAE synthetic catalog snapshot]
-    E --> F[Registered lagged momentum experiment]
-    F --> G[Verified report, evidence tier E0]
-    H[Vault SQLite paper store] --> G
+flowchart TB
+    A[Synthetic raw messages<br/>and two clocks] -->|archived messages| B[Replay feed and<br/>hashed JSONL history]
+    B -->|recorded history| C[Covered book replay]
+    C -->|books at covered times| D[Midpoint CSV and<br/>derivation hashes]
+    D -->|imported prices| E[QRAE synthetic<br/>catalog snapshot]
+    E -->|catalog-bound input| F[Registered lagged<br/>momentum experiment]
+    F -->|verified run| G[Verified report,<br/>evidence tier E0]
+    H[Vault SQLite paper store] -->|source citation| G
 ```
 
 ## Native strategy execution

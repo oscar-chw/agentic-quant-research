@@ -6,13 +6,13 @@ late data early, reconstruct through an outage, or manufacture a false target.
 `quantos-feed` makes those failures visible in the feature and experiment artifacts.
 
 ```mermaid
-flowchart LR
-    A[Raw JSONL: payloads, receipt, availability, gaps] --> B[Market-data admission / replay.feed book engine]
-    B --> C[Quote states and continuity segments]
-    C --> D[QRAE as-of features / immutable store]
-    D --> E[Fixed forecast evaluation / exclusions]
-    A --> F[Source hashes and adapter identity]
-    F --> E
+flowchart TB
+    A[Raw JSONL: payloads, receipt,<br/>availability, gaps] -->|archived messages| B[Market-data admission /<br/>replay.feed book engine]
+    B -->|book updates| C[Quote states and<br/>continuity segments]
+    C -->|as-of quote states| D[QRAE as-of features /<br/>immutable store]
+    D -->|stored features| E[Fixed forecast<br/>evaluation / exclusions]
+    A -->|hashed at intake| F[Source hashes and<br/>adapter identity]
+    F -->|bound to the artifacts| E
 ```
 
 The market-data package owns parsing, aggregate book updates and continuity.

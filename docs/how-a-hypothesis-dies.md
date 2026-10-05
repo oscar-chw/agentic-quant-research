@@ -9,15 +9,15 @@ names the file to open afterwards. The demo prints its output directory; below,
 `run/` is `<that directory>/loop/control` (or `loop/regime`).
 
 ```mermaid
-flowchart LR
-  P["5 proposed<br/>(the LLM never sees prices)"] --> V["4 valid, frozen<br/>as method cards"]
-  V --> T["2 pass the rule<br/>on validation"]
-  T --> C["1 passes<br/>the critic"]
-  C --> G{"gate: test computed<br/>for this card only"}
+flowchart TB
+  P["5 proposed<br/>(the LLM never sees prices)"] -->|"check_proposals"| V["4 valid, frozen<br/>as method cards"]
+  V -->|"sealed trial<br/>on validation"| T["2 pass the rule<br/>on validation"]
+  T -->|"critic_verdict"| C["1 passes<br/>the critic"]
+  C -->|"open_test"| G{"gate: test computed<br/>for this card only"}
   G -->|"control: test IC 1.000"| PR["promoted"]
   G -->|"regime: test IC −0.895"| RJ["rejected"]
-  P -. "H5: citation not retrieved" .-> X1(("✗"))
-  V -. "H2, H4: fail on validation" .-> X2(("✗"))
+  P -. "H5: citation<br/>not retrieved" .-> X1(("✗"))
+  V -. "H2, H4: fail<br/>on validation" .-> X2(("✗"))
   T -. "H3: critic objects" .-> X3(("✗"))
 ```
 
@@ -105,9 +105,9 @@ has the LLM arm still pending, but the grid arm went through the same kind of
 funnel ([ablation.json](../results/real-2026-10/ablation.json)):
 
 ```mermaid
-flowchart LR
-  A["120 hypotheses scored<br/>(momentum/reversal × 1–60)"] --> B["1 selected<br/>on validation IC:<br/>reversal-40"]
-  B --> C{"gate on test:<br/>net > 0 and above<br/>the best baseline"}
+flowchart TB
+  A["120 hypotheses scored<br/>(momentum/reversal × 1–60)"] -->|"best validation IC"| B["1 selected<br/>on validation IC:<br/>reversal-40"]
+  B -->|"one look at test"| C{"gate on test:<br/>net > 0 and above<br/>the best baseline"}
   C -->|"−6.89 bps/day"| D["0 promoted"]
 ```
 

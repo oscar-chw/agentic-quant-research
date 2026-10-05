@@ -5,59 +5,75 @@
 QRAE is local-first. Data and immutable artifacts own facts, deterministic validators own promotion gates, and humans own publication, exceptional risk, paper/live activation, credentials, and capital.
 
 ```mermaid
-flowchart LR
-  subgraph Sources[External sources]
-    PM[Prediction markets]
-    CR[Crypto]
-    EQ[Equities / ETFs]
-    FM[Futures / options / FX / commodities]
-    RM[Rates / macro vintages]
-    ALT[Papers / social / wallets]
-  end
+flowchart TB
+  Sources[External sources:<br/>prediction markets, crypto,<br/>equities / ETFs, futures /<br/>options / FX / commodities,<br/>rates / macro vintages,<br/>papers / social / wallets]
 
   subgraph Local[Canonical local QuantOS]
-    WO[Hash-bound work order]
-    ING[Source contract + PIT quality]
+    WO[Hash-bound<br/>work order]
+    ING[Source contract +<br/>PIT quality]
     SNAP[Immutable snapshot]
-    CAT[Event log + artifact catalog]
-    EXP[Baseline / experiment / replay]
-    VAL[Independent validation]
-    DEC[Decision + evidence ceiling]
-    REP[Report + claim ledger]
-    BRAIN[Knowledge / failures / lessons]
-    CODEX[Optional local Codex broker]
-    RBUNDLE[Authenticated immutable draft bundle]
-    WO --> ING --> SNAP --> EXP --> VAL --> DEC --> REP
-    SNAP --> CAT
-    EXP --> CAT
-    VAL --> CAT
-    DEC --> BRAIN
-    REP --> BRAIN
-    REP -. bounded draft task .-> CODEX --> RBUNDLE
+    CAT[Event log +<br/>artifact catalog]
+    EXP[Baseline / experiment<br/>/ replay]
+    VAL[Independent<br/>validation]
+    DEC[Decision +<br/>evidence ceiling]
+    REP[Report +<br/>claim ledger]
+    BRAIN[Knowledge / failures<br/>/ lessons]
+    CODEX[Optional local<br/>Codex broker]
+    RBUNDLE[Authenticated immutable<br/>draft bundle]
+    WO -->|dataset, cutoff| ING
+    ING -->|admitted data| SNAP
+    SNAP -->|frozen inputs| EXP
+    EXP -->|results| VAL
+    VAL -->|validated metrics| DEC
+    DEC -->|decision| REP
+    SNAP -->|recorded| CAT
+    EXP -->|recorded| CAT
+    VAL -->|recorded| CAT
+    DEC -->|knowledge record| BRAIN
+    REP -->|claims, lessons| BRAIN
+    REP -. bounded draft task .-> CODEX
+    CODEX -->|signed result| RBUNDLE
   end
 
-  Sources --> ING
+  Sources -->|source data| ING
+```
+
+Around that core sit optional online adapters, a deferred review export and a separate future execution system; dotted arrows are optional or not yet built:
+
+```mermaid
+flowchart TB
+  Sources[External sources]
+  EXP[Baseline / experiment / replay]
+  ING[Source contract + PIT quality]
+  REP[Report + claim ledger]
+  DEC[Decision + evidence ceiling]
 
   subgraph Optional[Optional replaceable online adapters]
     FETCH[Bounded fetch jobs]
     OBJECT[Private object backup]
     BATCH[Budgeted batch compute]
   end
-  Sources -. optional .-> FETCH --> OBJECT -. hash-verified sync .-> ING
+  Sources -. optional .-> FETCH
+  FETCH -->|fetched objects| OBJECT
+  OBJECT -. hash-verified sync .-> ING
   EXP -. survivor-only .-> BATCH
 
   subgraph Review[Deferred sanitized web review]
-    WEB[Vercel history / data / report / knowledge review]
+    WEB[History / data / report /<br/>knowledge review]
   end
+  ING ~~~ REP
   REP -. allowlisted immutable export .-> WEB
 
   subgraph Future[Separate future execution system]
     OMS[OMS + pre-trade risk]
     VENUE[Venue adapter]
-    REC[Fill / cash / position reconciliation]
+    REC[Fill / cash / position<br/>reconciliation]
     KILL[Monitor + kill control]
-    OMS --> VENUE --> REC --> KILL
+    OMS -->|risk-checked orders| VENUE
+    VENUE -->|fills| REC
+    REC -->|reconciled positions| KILL
   end
+  WEB ~~~ DEC
   DEC -. separately approved sealed package .-> OMS
 ```
 

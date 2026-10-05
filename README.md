@@ -14,57 +14,52 @@ before they are scored, every arm selects on validation only, and one pre-regist
 ([all diagrams](docs/DIAGRAMS.md); purple marks the path the study is about).
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph PIT["Point-in-time data contract"]
-        FETCH["scripts/fetch_binance_daily.py"]
+        UNI[("binance_universe.json<br/>SHA-256 per file")]
         CSV[("Binance daily CSVs<br/>34 USDT pairs")]
-        UNI[("fixtures/binance_universe.json<br/>SHA-256 per file")]
-        IMPORT["factor-research from-ohlcv<br/>every price carries available_at"]
+        IMPORT["from-ohlcv<br/>each price has<br/>available_at"]
     end
-    subgraph REG["Registered before any score"]
-        PROTO[("results/STUDY/protocol.json<br/>universe, splits, grid,<br/>arms, gate, seeds")]
-        SEL[("v2: selections.json<br/>frozen grid and random-K picks")]
-    end
+    PROTO[("protocol.json<br/>registered<br/>before any score")]
+    SEL[("v2: selections.json<br/>frozen picks")]
     subgraph HYP["Hypotheses"]
         VAULT[("packages/vault<br/>notes, method cards")]
         LLM["LLM proposer, pending<br/>K = 8, never sees prices"]
-        CHECK{"loop.check_proposals<br/>schema, retrieved citation,<br/>no duplicate"}
-        CARD["loop.freeze<br/>method card hashed<br/>with the data"]
-        GRID["ablation.grid<br/>momentum or reversal<br/>x lookback 1-60 = 120"]
+        CHECK{"loop.check_proposals"}
+        CARD["loop.freeze<br/>card hashed<br/>with the data"]
+        GRID["ablation.grid<br/>momentum or reversal<br/>x lookback 1-60"]
     end
-    LAB["factor lab, every hypothesis<br/>prepare, run,<br/>verify --recompute"]
+    LAB["factor lab<br/>prepare, run,<br/>verify --recompute"]
     subgraph ARMS["Arms: select on validation only"]
-        ALLM["LLM arm<br/>ablation.llm_arm"]
+        ALLM["LLM arm"]
         AGRID["grid arm<br/>all 120"]
-        ARND["random-K arm<br/>8 drawn, seed 20261003"]
+        ARND["random-K arm<br/>8 drawn"]
     end
-    GATE{"ablation.gate_passes<br/>test net > 0 and above<br/>the best baseline"}
-    HUMAN["loop.decide<br/>a human, or the<br/>pre-registered rule"]
-    RES[("ablation.json, hypotheses.json,<br/>REPORT.md, never overwritten")]
-    XC["scripts/crosscheck_real.py<br/>pandas, no factor lab"]
+    GATE{"ablation.gate_passes<br/>test net > 0 and<br/>above best baseline"}
+    HUMAN["loop.decide<br/>human or<br/>pre-registered rule"]
+    RES[("ablation.json, REPORT.md<br/>never overwritten")]
+    XC["crosscheck_real.py<br/>pandas, no factor lab"]
 
-    FETCH -->|"checksum-verified archives"| CSV
-    UNI -->|"ablation verify-data:<br/>refuses a changed file"| CSV
+    UNI -->|"verify-data refuses<br/>a changed file"| CSV
     CSV ==>|"daily bars"| IMPORT
-    PROTO -->|"names universe<br/>and experiment"| IMPORT
-    VAULT -->|"retrieved notes only"| LLM
+    PROTO -->|"universe,<br/>experiment"| IMPORT
+    VAULT -->|"retrieved notes"| LLM
     LLM -.->|"draft JSON"| CHECK
-    CHECK -->|"valid drafts"| CARD
+    CHECK -->|"schema, citation,<br/>no duplicate"| CARD
     CARD -->|"frozen cards"| LAB
     GRID ==>|"120 hypotheses"| LAB
-    IMPORT ==>|"prices.csv and<br/>import contract"| LAB
-    LAB -.->|"cards cross-checked<br/>against the grid trial"| ALLM
+    IMPORT ==>|"prices.csv,<br/>contract"| LAB
+    LAB -.->|"cards, checked<br/>against grid trial"| ALLM
     LAB ==>|"scored trials"| AGRID
-    LAB -->|"same scored trials"| ARND
-    SEL -.->|"v2 scoring refuses unless<br/>it reproduces them"| AGRID
+    LAB -->|"same trials"| ARND
+    SEL -.->|"v2 refuses unless<br/>reproduced"| AGRID
     ALLM -.->|"its pick"| GATE
     AGRID ==>|"pick: v1 by IC,<br/>v2 by net"| GATE
     ARND -->|"its pick"| GATE
     GATE ==>|"promoted or not"| RES
-    GATE -->|"a card awaiting the human"| HUMAN
-    HUMAN -->|"decision bound to<br/>the ledger SHA-256"| RES
-    CSV -.->|"raw CSVs"| XC
-    XC -.->|"962 numbers match,<br/>largest gap 8.9e-16"| RES
+    GATE -->|"card awaiting<br/>the human"| HUMAN
+    HUMAN -->|"bound to ledger<br/>SHA-256"| RES
+    XC -.->|"recomputes from<br/>raw CSVs: 962<br/>numbers match"| RES
 
     classDef data fill:#dbeafe,stroke:#1d4ed8,color:#0b1220
     classDef step fill:#f1f5f9,stroke:#475569,color:#0b1220
@@ -73,7 +68,7 @@ flowchart LR
     classDef ext  fill:#f8fafc,stroke:#94a3b8,color:#0b1220,stroke-dasharray:4 3
     classDef key  fill:#ede9fe,stroke:#6d28d9,color:#0b1220,stroke-width:2px
     class CSV,UNI,PROTO,SEL,VAULT data
-    class FETCH,CARD,ARND,HUMAN,XC step
+    class CARD,ARND,HUMAN,XC step
     class CHECK,GATE gate
     class RES out
     class LLM,ALLM ext
@@ -260,33 +255,33 @@ keys reach the pinned open-weight model within a call budget, and any doubtful a
 
 ```mermaid
 sequenceDiagram
-    participant L as quantos_showcase.loop (run, propose)
-    participant T as qrae.llm.ReplayThenLive
-    participant R as ReplayProvider (replay file)
+    participant L as loop.py
+    participant T as ReplayThenLive
+    participant R as ReplayProvider
     participant O as OpenRouterProvider
-    participant M as OpenRouter (external)
-    Note over L,O: provider_for: --replay alone, --live alone, or both (replayed keys first)
-    Note over L,O: --live without OPENROUTER_API_KEY: MissingApiKey, exit 4, no call made
-    L->>T: complete(key, prompt)
+    participant M as OpenRouter
+    Note over L,T: provider_for: --replay,<br/>--live, or both<br/>(replayed keys first)
+    Note over L,T: --live, no OPENROUTER_API_KEY:<br/>MissingApiKey, exit 4, no call
+    L->>T: complete(key,<br/>prompt)
     alt key recorded in the replay
-        T->>R: complete(key, prompt)
-        R-->>T: recorded response
-        Note over R: prompt SHA-256 changed: ReplayMiss, never a silent live call
+        T->>R: complete
+        R-->>T: recorded<br/>response
+        Note over R: prompt SHA-256<br/>changed: ReplayMiss,<br/>never a silent<br/>live call
     else key not recorded
-        T->>O: complete(key, prompt)
-        Note over O: calls already at --max-calls: refused before the call
-        O->>M: POST qwen/qwen3.8-27b:free, temperature 0,<br/>reasoning effort low (excluded), max_tokens 8192
+        T->>O: complete
+        Note over O: at --max-calls:<br/>refused before<br/>the call
+        O->>M: POST, pinned<br/>qwen3.8-27b:free,<br/>temperature 0
         M-->>O: JSON body
-        alt non-200 (429 rate limit), error field, finish_reason not stop,<br/>no content, over 256 KiB, another model
-            O--xL: RuntimeError: refused, not recorded, exit 2
+        alt non-200, error field,<br/>finish_reason not stop,<br/>no content, over 256 KiB,<br/>another model
+            O--xL: RuntimeError: refused,<br/>not recorded, exit 2
         else accepted
-            O-->>T: text, with model, provider and id into the provenance
+            O-->>T: text, model,<br/>provider, id
         end
     end
-    T-->>L: response text
-    L->>L: check_proposals, or the critic broker's fixed schema
-    Note over L: --record writes a new replay file and never overwrites one
-    Note over L: real_run.sh --live: a failed session is not committed, the arm is reported pending
+    T-->>L: response<br/>text
+    L->>L: check_proposals,<br/>or the critic's<br/>fixed schema
+    Note over L,T: --record writes a new<br/>replay file, never<br/>overwrites one
+    Note over L,T: real_run.sh --live: a<br/>failed session is not<br/>committed, arm pending
 ```
 
 Where in the code: `packages/research/src/qrae/llm.py` (`ReplayProvider`, `OpenRouterProvider`, `ReplayThenLive`,
