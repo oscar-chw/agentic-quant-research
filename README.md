@@ -1,6 +1,6 @@
 # asof-research: can an LLM pick better trading hypotheses than brute force?
 
-[![ci](https://github.com/hihihhi/asof-research/actions/workflows/ci.yml/badge.svg)](https://github.com/hihihhi/asof-research/actions/workflows/ci.yml) [![lint](https://github.com/hihihhi/asof-research/actions/workflows/lint.yml/badge.svg)](https://github.com/hihihhi/asof-research/actions/workflows/lint.yml)
+[![ci](https://github.com/oscar-chw/asof-research/actions/workflows/ci.yml/badge.svg)](https://github.com/oscar-chw/asof-research/actions/workflows/ci.yml) [![lint](https://github.com/oscar-chw/asof-research/actions/workflows/lint.yml/badge.svg)](https://github.com/oscar-chw/asof-research/actions/workflows/lint.yml)
 
 **120 trading hypotheses screened on real Binance data; the pre-registered gate blocked both control picks, which lost money out of sample**
 (34 pairs; selected on 2024, tested 2025-01 → 2026-08; 10 bps a side: −6.89 and −7.38 bps/day, [ablation.json](results/real-2026-10/ablation.json)).
@@ -194,4 +194,4 @@ development history is private; the [design history](docs/design-history.md#publ
 and what evidences the pre-registration instead. The envelope
 validator, which refuses an overclaiming run summary, comes from my
 [codex-quant-os](https://github.com/Oscar-Codespace/codex-quant-os) (archived). My other real-data
-result, a negative walk-forward, is [Polymarket-Crypto-5min](https://github.com/hihihhi/Polymarket-Crypto-5min). MIT licensed.
+result, a negative walk-forward, is [Polymarket-Crypto-5min](https://github.com/oscar-chw/Polymarket-Crypto-5min). MIT licensed.
