@@ -191,5 +191,5 @@ Implemented with AI coding agents under Oscar's design and review. This reposito
 published with fresh history; the [design history](docs/design-history.md#publication-history) says why,
 and what evidences the pre-registration instead. The envelope
 validator, which refuses an overclaiming run summary, comes from my
-[codex-quant-os](https://github.com/hihihhi/codex-quant-os). My other real-data
+[codex-quant-os](https://github.com/Oscar-Codespace/codex-quant-os). My other real-data
 result, a negative walk-forward, is [Polymarket-Crypto-5min](https://github.com/hihihhi/Polymarket-Crypto-5min). MIT licensed.
