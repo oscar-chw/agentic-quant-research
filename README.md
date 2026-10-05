@@ -9,6 +9,82 @@ every hypothesis is frozen before it is scored, every number is computed by code
 and the LLM must beat two dumb controls under the same gate: enumerate all 120 hypotheses, or draw 8 at random.
 The LLM arm is pending; it is scored on a forward window that closes 2027-08-31 ([protocol v2](results/forward-2026-09/README.md)).
 
+The harness: prices enter through a checksummed point-in-time contract, hypotheses are frozen
+before they are scored, every arm selects on validation only, and one pre-registered gate decides
+([all diagrams](docs/DIAGRAMS.md); purple marks the path the study is about).
+
+```mermaid
+flowchart LR
+    subgraph PIT["Point-in-time data contract"]
+        FETCH["scripts/fetch_binance_daily.py"]
+        CSV[("Binance daily CSVs<br/>34 USDT pairs")]
+        UNI[("fixtures/binance_universe.json<br/>SHA-256 per file")]
+        IMPORT["factor-research from-ohlcv<br/>every price carries available_at"]
+    end
+    subgraph REG["Registered before any score"]
+        PROTO[("results/STUDY/protocol.json<br/>universe, splits, grid,<br/>arms, gate, seeds")]
+        SEL[("v2: selections.json<br/>frozen grid and random-K picks")]
+    end
+    subgraph HYP["Hypotheses"]
+        VAULT[("packages/vault<br/>notes, method cards")]
+        LLM["LLM proposer, pending<br/>K = 8, never sees prices"]
+        CHECK{"loop.check_proposals<br/>schema, retrieved citation,<br/>no duplicate"}
+        CARD["loop.freeze<br/>method card hashed<br/>with the data"]
+        GRID["ablation.grid<br/>momentum or reversal<br/>x lookback 1-60 = 120"]
+    end
+    LAB["factor lab, every hypothesis<br/>prepare, run,<br/>verify --recompute"]
+    subgraph ARMS["Arms: select on validation only"]
+        ALLM["LLM arm<br/>ablation.llm_arm"]
+        AGRID["grid arm<br/>all 120"]
+        ARND["random-K arm<br/>8 drawn, seed 20261003"]
+    end
+    GATE{"ablation.gate_passes<br/>test net > 0 and above<br/>the best baseline"}
+    HUMAN["loop.decide<br/>a human, or the<br/>pre-registered rule"]
+    RES[("ablation.json, hypotheses.json,<br/>REPORT.md, never overwritten")]
+    XC["scripts/crosscheck_real.py<br/>pandas, no factor lab"]
+
+    FETCH -->|"checksum-verified archives"| CSV
+    UNI -->|"ablation verify-data:<br/>refuses a changed file"| CSV
+    CSV ==>|"daily bars"| IMPORT
+    PROTO -->|"names universe<br/>and experiment"| IMPORT
+    VAULT -->|"retrieved notes only"| LLM
+    LLM -.->|"draft JSON"| CHECK
+    CHECK -->|"valid drafts"| CARD
+    CARD -->|"frozen cards"| LAB
+    GRID ==>|"120 hypotheses"| LAB
+    IMPORT ==>|"prices.csv and<br/>import contract"| LAB
+    LAB -.->|"cards cross-checked<br/>against the grid trial"| ALLM
+    LAB ==>|"scored trials"| AGRID
+    LAB -->|"same scored trials"| ARND
+    SEL -.->|"v2 scoring refuses unless<br/>it reproduces them"| AGRID
+    ALLM -.->|"its pick"| GATE
+    AGRID ==>|"pick: v1 by IC,<br/>v2 by net"| GATE
+    ARND -->|"its pick"| GATE
+    GATE ==>|"promoted or not"| RES
+    GATE -->|"a card awaiting the human"| HUMAN
+    HUMAN -->|"decision bound to<br/>the ledger SHA-256"| RES
+    CSV -.->|"raw CSVs"| XC
+    XC -.->|"962 numbers match,<br/>largest gap 8.9e-16"| RES
+
+    classDef data fill:#dbeafe,stroke:#1d4ed8,color:#0b1220
+    classDef step fill:#f1f5f9,stroke:#475569,color:#0b1220
+    classDef gate fill:#fef3c7,stroke:#b45309,color:#0b1220
+    classDef out  fill:#dcfce7,stroke:#15803d,color:#0b1220
+    classDef ext  fill:#f8fafc,stroke:#94a3b8,color:#0b1220,stroke-dasharray:4 3
+    classDef key  fill:#ede9fe,stroke:#6d28d9,color:#0b1220,stroke-width:2px
+    class CSV,UNI,PROTO,SEL,VAULT data
+    class FETCH,CARD,ARND,HUMAN,XC step
+    class CHECK,GATE gate
+    class RES out
+    class LLM,ALLM ext
+    class IMPORT,GRID,LAB,AGRID key
+```
+
+Where in the code: `scripts/fetch_binance_daily.py`, `packages/factor/src/factor_research/{ohlcv,prepare,runs}.py`,
+`apps/quantos/src/quantos_showcase/ablation.py` (`verify_data`, `grid`, `select`, `random_arm`, `llm_arm`,
+`check_selections`, `gate_passes`, `run`), `apps/quantos/src/quantos_showcase/loop.py` (`check_proposals`,
+`freeze`, `decide`), `packages/vault/method_contract.py`, `scripts/crosscheck_real.py`, `scripts/real_run.sh`.
+
 ![Net return by momentum lookback, 2024 against 2025-26](docs/assets/selection.png)
 <sub>The best lookback moved from short to long: the 2024 ranking of the 60 momentum lookbacks by net is largely reversed on the test window (Spearman −0.59).
 A POST-HOC view of the committed results, not pre-registered ([selection.json](docs/evidence/selection.json)).</sub>
@@ -61,6 +137,68 @@ select on validation, and get one look at test.
 Disclosed first ([details](results/real-2026-10/README.md#disclosures)): the author's
 alpha-gp-lab repository had already evaluated v1's test window, and v1 gave the LLM a stricter gate
 than the controls. Both are why protocol v2 exists.
+
+The order in which the rules were fixed, from the SHA-256 table in the
+[publication history](docs/design-history.md#publication-history) (author's local time, UTC+08:00;
+v1 against v2 split windows in [docs/DIAGRAMS.md](docs/DIAGRAMS.md#3-split-windows-v1-against-v2)):
+
+```mermaid
+flowchart TB
+    subgraph V1["Protocol v1, 2026-10-03"]
+        U["18:09:21<br/>universe checksums<br/>binance_universe.json"]
+        P1["18:10:31<br/>v1 registered: protocol,<br/>campaign, experiment"]
+        R1["18:16:43<br/>v1 run: ablation.json,<br/>hypotheses.json, REPORT.md"]
+        PH["18:44<br/>posthoc.json<br/>labelled POST-HOC"]
+    end
+    subgraph V2["Protocol v2"]
+        P2["18:52:14<br/>v2 registered: one gate for<br/>every arm, forward test window"]
+        A1["19:13:42 amendment 1<br/>select on validation net,<br/>grid and random-K frozen"]
+        A2["19:28:07 amendment 2<br/>Newey-West verdict,<br/>power stated"]
+        A3["19:50:08 amendment 3<br/>delisting run on<br/>the unfilled data"]
+        A4["20:13:14 amendment 4<br/>wording only"]
+        PUB["2026-10-04<br/>fresh public history"]
+        A5["2026-10-05 amendment 5<br/>open weights Qwen3.8-27B<br/>replace claude-opus-5-5,<br/>no Anthropic or OpenAI model"]
+    end
+    subgraph PEND["Pending, in protocol order"]
+        S1["scripts/forward_propose.sh<br/>LLM proposals, 1 call,<br/>no prices read"]
+        S2["commit the REAL LLM<br/>OUTPUT replays"]
+        S3["fetch bars to 2027-08-31<br/>in 2027-09"]
+        S4["real_run.sh --live<br/>score every arm once"]
+    end
+
+    U -->|"one minute later"| P1
+    P1 ==>|"six minutes later,<br/>before any number"| R1
+    R1 -->|"a review questioned v1"| PH
+    R1 ==>|"test window already used<br/>by alpha-gp-lab, unequal gates"| P2
+    P2 ==>|"before any LLM call"| A1
+    A1 -->|"verdict on the<br/>selection metric"| A2
+    A2 -->|"drop rule could not<br/>reproduce the picks"| A3
+    A3 -->|"no rule changed"| A4
+    A4 -->|"next day"| PUB
+    PUB -->|"next day, before<br/>any LLM call"| A5
+    A5 -.->|"before any<br/>forward bar is fetched"| S1
+    S1 -.->|"replay files"| S2
+    S2 -.->|"then"| S3
+    S3 -.->|"after the last test bar"| S4
+
+    classDef data fill:#dbeafe,stroke:#1d4ed8,color:#0b1220
+    classDef step fill:#f1f5f9,stroke:#475569,color:#0b1220
+    classDef gate fill:#fef3c7,stroke:#b45309,color:#0b1220
+    classDef out  fill:#dcfce7,stroke:#15803d,color:#0b1220
+    classDef ext  fill:#f8fafc,stroke:#94a3b8,color:#0b1220,stroke-dasharray:4 3
+    classDef key  fill:#ede9fe,stroke:#6d28d9,color:#0b1220,stroke-width:2px
+    class U data
+    class PH,A2,A3,A4,A5 step
+    class A1 gate
+    class R1,PUB out
+    class S1,S2,S3,S4 ext
+    class P1,P2 key
+```
+
+Where in the code: [design-history.md](docs/design-history.md) (the dated decisions and the SHA-256 table,
+checked by `tests/test_docs.py`), `results/real-2026-10/protocol.json`, `results/forward-2026-09/protocol.json`
+(`amendments`), [results/forward-2026-09/README.md](results/forward-2026-09/README.md) (the pending steps),
+`scripts/forward_propose.sh`, `scripts/real_run.sh`.
 
 **Protocol v1, REAL data** ([protocol.json](results/real-2026-10/protocol.json),
 registered 2026-10-03 18:10 UTC+08:00, before the first run; SHA-256
@@ -117,21 +255,47 @@ every number with a separate pandas script; `scripts/real_run.sh` reruns the stu
 
 ## Architecture
 
+The LLM transport, the only path by which a model's text enters: recorded keys replay, unrecorded
+keys reach the pinned open-weight model within a call budget, and any doubtful answer is refused:
+
 ```mermaid
-flowchart LR
-  PR[Protocol, registered first;<br/>frozen control picks, SHA-256] --> FL
-  D[Binance CSVs,<br/>checksum-verified] --> FL[Factor lab: run every<br/>hypothesis, recompute]
-  FL --> AB[Ablation: LLM vs grid<br/>vs random-K, one gate]
-  D --> X[Separate pandas<br/>recomputation] --> AB
-  AB --> V[Verdict on the<br/>test split]
-  subgraph Agents[LLM agents: draft only]
-    P[Proposer] ~~~ C[Critic]
-  end
-  P -. frozen cards .-> FL
-  C -. objections only .-> AB
+sequenceDiagram
+    participant L as quantos_showcase.loop (run, propose)
+    participant T as qrae.llm.ReplayThenLive
+    participant R as ReplayProvider (replay file)
+    participant O as OpenRouterProvider
+    participant M as OpenRouter (external)
+    Note over L,O: provider_for: --replay alone, --live alone, or both (replayed keys first)
+    Note over L,O: --live without OPENROUTER_API_KEY: MissingApiKey, exit 4, no call made
+    L->>T: complete(key, prompt)
+    alt key recorded in the replay
+        T->>R: complete(key, prompt)
+        R-->>T: recorded response
+        Note over R: prompt SHA-256 changed: ReplayMiss, never a silent live call
+    else key not recorded
+        T->>O: complete(key, prompt)
+        Note over O: calls already at --max-calls: refused before the call
+        O->>M: POST qwen/qwen3.8-27b:free, temperature 0,<br/>reasoning effort low (excluded), max_tokens 8192
+        M-->>O: JSON body
+        alt non-200 (429 rate limit), error field, finish_reason not stop,<br/>no content, over 256 KiB, another model
+            O--xL: RuntimeError: refused, not recorded, exit 2
+        else accepted
+            O-->>T: text, with model, provider and id into the provenance
+        end
+    end
+    T-->>L: response text
+    L->>L: check_proposals, or the critic broker's fixed schema
+    Note over L: --record writes a new replay file and never overwrites one
+    Note over L: real_run.sh --live: a failed session is not committed, the arm is reported pending
 ```
 
+Where in the code: `packages/research/src/qrae/llm.py` (`ReplayProvider`, `OpenRouterProvider`, `ReplayThenLive`,
+`broker_runner`), `apps/quantos/src/quantos_showcase/loop.py` (`provider_for`, `main`), `scripts/forward_propose.sh`,
+`scripts/real_run.sh`; the request settings are pre-registered in `results/forward-2026-09/protocol.json` (`arms.llm`).
+
 Loop stages: [how a hypothesis dies](docs/how-a-hypothesis-dies.md). Every package: [architecture.md](docs/architecture.md).
+All eight diagrams, numbered (the loop's states, the C++ replay port's parity check, the factor lab and imc-sim):
+[docs/DIAGRAMS.md](docs/DIAGRAMS.md).
 
 ### Design decisions and trade-offs
 

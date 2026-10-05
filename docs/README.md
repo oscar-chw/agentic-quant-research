@@ -30,6 +30,7 @@ the repository outside `packages/*/docs` is listed on this page
 
 **Top-level docs**
 - [architecture.md](architecture.md): every package, what it owns, its evidence and what is missing.
+- [DIAGRAMS.md](DIAGRAMS.md): the numbered diagrams: the harness, the pre-registration timeline, v1 against v2 windows, the loop's states, the LLM transport, the replay parity check, the factor lab and imc-sim.
 - [other-experiments.md](other-experiments.md): the quote-imbalance and inventory-aware quoting experiments, both SYNTHETIC, both negative.
 - [quote-imbalance-walkthrough.md](quote-imbalance-walkthrough.md): the optional `demo.sh --quotes` run, step by step.
 
