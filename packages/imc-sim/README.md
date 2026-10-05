@@ -1,10 +1,9 @@
 > Package reference. Start at the [root README](../../README.md); the [docs index](../../docs/README.md) has reading paths.
 
-# Diagnose a saved trading run
+# Market-Making Lab: quote simulator and run diagnostics
 
-Import a saved community-backtester log and inspect cash, configured fees, inventory limits and fill markouts in one offline report. The importer removes manual event-by-event JSONL conversion while keeping identity, timing and fee assumptions explicit. It preserves the original log, import configuration and normalized input alongside the report, with hashes linking all of them to the installed code.
-
-The included import example has two instruments, four own fills and two market trades. After excluding market trades and applying the declared fee of 1 per own fill, it ends at **cash 901, ALPHA position 1, BETA position 0, equity 1003 and marked P&L 3**, from opening cash 1000. Its initial ALPHA buy breaches the declared limit. These are hand-checked synthetic diagnostics, not market performance.
+An inventory-aware market-making quote policy, a simulator that turns its quotes into fills under declared queue and cancellation-delay assumptions, and an offline analyzer that reports cash, fees, inventory limits and fill markouts for a simulated run or a saved community-backtester log.
+All examples are SYNTHETIC inputs, not market performance.
 
 **Post-competition tooling, written after IMC Prosperity 4; it contains none of the team's competition code.** Format support is limited to a declared, pinned Prosperity 4 community writer; this is not an official Prosperity adapter, matching simulator or historical-result claim.
 
@@ -12,10 +11,24 @@ The included import example has two instruments, four own fills and two market t
 
 Python 3.9 or newer; no runtime dependencies. From the monorepo root, `make install` installs it offline (setuptools and wheel must already be in the environment) and puts `imc4-analyze` on the environment's PATH; without installing, `source scripts/env.sh` and use `$PY -m imc4_analysis`.
 
+### The quote study
+
+```sh
+imc4-analyze quote-study --out quote-study
+```
+
+This runs a strategy that generates orders and simulated fills. The [inventory-policy study](docs/QUOTE_POLICY.md) derives the reservation-price adjustment, enforces ticks/lots/live-order capacity, and compares symmetric versus adjusted quotes on fixed rising/falling inputs with queue and cancellation-delay sensitivities. Its traces feed the run analyzer below; unfavorable results are retained. This is a controlled synthetic study, not observed-market performance.
+
+### Diagnose a saved run
+
 ```sh
 imc4-analyze import-log packages/imc-sim/examples/community-log/sample.log --config packages/imc-sim/examples/community-log/import.json --out imported-run
 source scripts/env.sh && $PY -m pytest -q -p no:cacheprovider packages/imc-sim/tests
 ```
+
+Import a saved community-backtester log and inspect cash, configured fees, inventory limits and fill markouts in one offline report. The importer removes manual event-by-event JSONL conversion while keeping identity, timing and fee assumptions explicit. It preserves the original log, import configuration and normalized input alongside the report, with hashes linking all of them to the installed code.
+
+The included import example has two instruments, four own fills and two market trades. After excluding market trades and applying the declared fee of 1 per own fill, it ends at **cash 901, ALPHA position 1, BETA position 0, equity 1003 and marked P&L 3**, from opening cash 1000. Its initial ALPHA buy breaches the declared limit. These are hand-checked synthetic diagnostics, not market performance.
 
 Open `imported-run/report.html`. The run directory also contains `raw-source.log`, `import-config.json`, `normalized.jsonl`, `import-receipt.json`, `report.json` and the last-written `complete.json`. Use a new output directory for every run.
 
@@ -28,11 +41,7 @@ imc4-analyze demo --out demo-output
 imc4-analyze analyze packages/imc-sim/src/imc4_analysis/data/synthetic.jsonl --out explicit-input-output
 ```
 
-To exercise a strategy that generates orders and simulated fills, run `imc4-analyze quote-study --out quote-study`. The [inventory-policy study](docs/QUOTE_POLICY.md) derives the reservation-price adjustment, enforces ticks/lots/live-order capacity, and compares symmetric versus adjusted quotes on fixed rising/falling inputs with queue and cancellation-delay sensitivities. Its traces feed this same analyzer; unfavorable results are retained. This is a controlled synthetic study, not observed-market performance.
-
-Open `demo-output/report.html` in a browser. It loads no external assets or services. `report.json` contains exact numerical values; `complete.json` records input identity and output hashes. The CLI refuses any existing output directory. An interrupted write without a complete, matching receipt is incomplete; retry into a new directory and retain the partial evidence. Files are fsynced, but power-loss/directory durability and concurrent filesystem fault injection are not qualified.
-
-Report and completion records also include a deterministic fingerprint of the actual installed package's Python sources: canonical relative-path/per-file-hash manifest, hashed with SHA-256. It includes the fingerprint implementation itself. Scope excludes the fixture (separately input-hashed), package metadata, interpreter and standard library; runtime implementation/version are recorded separately. A version label alone is not used as build identity. Normal unpacked wheel/source installation is supported; source-less/zip imports are not qualified.
+Open `demo-output/report.html` in a browser. It loads no external assets or services. `report.json` contains exact numerical values; `complete.json` records input identity and output hashes.
 
 Default `--detail sampled` retains at most 200 snapshots and 200 fills. `--sample-limit` accepts 10–1000. `--detail full` retains every row within the **10,000-event, 16-MiB input limit**. HTML always displays at most 200 snapshots and 200 fills, even with full JSON. Both modes compute exact aggregate results from every admitted event.
 
@@ -58,6 +67,12 @@ Events must be strictly increasing by `(timestamp, sequence)`; no sorting or dup
 Each valuation uses only previously observed marks, including the current event. A held position with a missing/stale mark invalidates current portfolio valuation. Markout is computed separately after the causal pass, using the last quote at or before `fill timestamp + horizon`; no interpolation or quote after the target. The whole run must reach that target. A carried mark may predate the fill when still within the declared maximum age; its observation time and age remain visible. A later quote can populate a previously unavailable future diagnostic but cannot alter any earlier valuation snapshot.
 
 Sampling retains endpoints/evenly spaced rows plus the first limit breach, first unavailable valuation and first adverse fill. It is **not extrema-preserving** and does not retain all anomalies. Exact totals and per-instrument breach-observation counts are unaffected. Δ columns use the actual preceding event, not the previously displayed sample row. Full JSON within the admitted cap is the raw drill-down route.
+
+## Run records and durability
+
+The CLI refuses any existing output directory. An interrupted write without a complete, matching receipt is incomplete; retry into a new directory and retain the partial evidence. Files are fsynced, but power-loss/directory durability and concurrent filesystem fault injection are not qualified.
+
+Report and completion records also include a deterministic fingerprint of the actual installed package's Python sources: canonical relative-path/per-file-hash manifest, hashed with SHA-256. It includes the fingerprint implementation itself. Scope excludes the fixture (separately input-hashed), package metadata, interpreter and standard library; runtime implementation/version are recorded separately. A version label alone is not used as build identity. Normal unpacked wheel/source installation is supported; source-less/zip imports are not qualified.
 
 ## Architecture, tests and measurements
 

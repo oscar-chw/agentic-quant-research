@@ -1,22 +1,17 @@
-# asof-research
+# asof-research: can an LLM pick better trading hypotheses than brute force?
 
 [![ci](https://github.com/hihihhi/asof-research/actions/workflows/ci.yml/badge.svg)](https://github.com/hihihhi/asof-research/actions/workflows/ci.yml) [![lint](https://github.com/hihihhi/asof-research/actions/workflows/lint.yml/badge.svg)](https://github.com/hihihhi/asof-research/actions/workflows/lint.yml)
 
-**Can an LLM pick better trading hypotheses than brute force?** asof-research is a
-point-in-time ("as-of") harness built to answer that without trusting the LLM: every
-hypothesis is frozen before it is scored, every number is computed by code the model
-never touches, and the LLM must beat two dumb controls under the same gate:
-enumerate all 120 hypotheses, or draw 8 at random.
-
-**First real run, pre-registered** (34 Binance pairs; validation 2024, test 2025-01 →
-2026-08; 10 bps a side): both controls' validation winners lost money out of sample
-(−6.89 and −7.38 bps/day) and neither pick was promoted ([ablation.json](results/real-2026-10/ablation.json)).
-The LLM arm has not run yet (the `claude` CLI was not signed in when v1 ran); it is registered against a forward window that closes 2027-08-31, and since amendment 5 it uses an open-weight model, Qwen3.8-27B on OpenRouter, with no Anthropic or OpenAI model.
-The git history is short because the development history is private: the [publication history](docs/design-history.md#publication-history) says why, and what evidences the pre-registration instead.
+**120 trading hypotheses screened on real Binance data; the pre-registered gate blocked both control picks, which lost money out of sample**
+(34 pairs; selected on 2024, tested 2025-01 → 2026-08; 10 bps a side: −6.89 and −7.38 bps/day, [ablation.json](results/real-2026-10/ablation.json)).
+asof-research is the point-in-time ("as-of") harness behind that run. It tests an LLM without trusting it:
+every hypothesis is frozen before it is scored, every number is computed by code the model never touches,
+and the LLM must beat two dumb controls under the same gate: enumerate all 120 hypotheses, or draw 8 at random.
+The LLM arm is pending; it is scored on a forward window that closes 2027-08-31 ([protocol v2](results/forward-2026-09/README.md)).
 
 ![Net return by momentum lookback, 2024 against 2025-26](docs/assets/selection.png)
-<sub>POST-HOC view of the committed results, not pre-registered ([selection.json](docs/evidence/selection.json)).
-The best lookback moved from short to long: the 2024 ranking of the 60 momentum lookbacks by net is largely reversed on the test window (Spearman −0.59).</sub>
+<sub>The best lookback moved from short to long: the 2024 ranking of the 60 momentum lookbacks by net is largely reversed on the test window (Spearman −0.59).
+A POST-HOC view of the committed results, not pre-registered ([selection.json](docs/evidence/selection.json)).</sub>
 
 ```sh
 python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -26,6 +21,8 @@ python3 tools/render_selection.py --check   # recompute the figure's numbers fro
 
 The demo walks five hand-written hypotheses to [four different deaths](docs/how-a-hypothesis-dies.md).
 Reading paths for researchers, developers and LLM-safety reviewers are in the [docs index](docs/README.md).
+
+Implemented with AI coding agents under Oscar's design and review.
 
 ## The problem
 
@@ -84,7 +81,8 @@ Validation 2024, test 2025-01-01 → 2026-08-31. Grid: momentum or reversal × l
 | equal-weight hold baseline | fixed | | n/a | −3.92 | |
 
 Sources: [ablation.json](results/real-2026-10/ablation.json); Newey-West t (lag 5) from
-[posthoc.json](results/real-2026-10/posthoc.json), POST-HOC.
+[posthoc.json](results/real-2026-10/posthoc.json), POST-HOC. The LLM arm did not run in v1: the
+`claude` CLI was not signed in when v1 ran, and the protocol's failure rule reports the arm as pending.
 
 **What carries the verdict** is the test split: the grid's pick has test t −0.20, and
 over 10,000 further random-K draws the pick's test net was positive in 0.12%
@@ -97,7 +95,9 @@ over 10,000 further random-K draws the pick's test net was positive in 0.12%
 land between −15.32 and +3.79 bps/day; 30 of the 113 possible picks pass the gate
 ([posthoc.json](results/real-2026-10/posthoc.json)). [Protocol v2](results/forward-2026-09/README.md),
 amended five times before any LLM call, gives every arm one rule, selects on net, and
-has frozen the controls' picks.
+has frozen the controls' picks. Its LLM arm is registered against a forward window that closes
+2027-08-31, and since amendment 5 it uses an open-weight model, Qwen3.8-27B on OpenRouter, with no
+Anthropic or OpenAI model.
 
 **Why believe the numbers.** [crosscheck_real.py](scripts/crosscheck_real.py)
 recomputes all 962 reported numbers from the raw CSVs with pandas, without the factor
@@ -189,9 +189,9 @@ Lessons from what the repository records (confirmed by the author, 2026-10-03).
 
 ---
 
-Implemented with AI coding agents under Oscar's design and review. This repository was
-published with fresh history; the [design history](docs/design-history.md#publication-history) says why,
+The git history is short because this repository was published with fresh history, and the
+development history is private; the [design history](docs/design-history.md#publication-history) says why,
 and what evidences the pre-registration instead. The envelope
 validator, which refuses an overclaiming run summary, comes from my
-[codex-quant-os](https://github.com/Oscar-Codespace/codex-quant-os). My other real-data
+[codex-quant-os](https://github.com/Oscar-Codespace/codex-quant-os) (archived). My other real-data
 result, a negative walk-forward, is [Polymarket-Crypto-5min](https://github.com/hihihhi/Polymarket-Crypto-5min). MIT licensed.
