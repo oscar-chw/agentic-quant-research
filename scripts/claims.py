@@ -16,14 +16,20 @@ docs/claims/chNN.md. Its tests are every `tests/<file>.py::<test>` named in `whe
 Outcome of a claim, given one pytest run (a parametrised test passes only if every case passed):
   passing         status done, and every test it names ran here and passed
   partly run      status done, at least one named test passed here, the others did not run here
-  reference only  status done, it names tests, but none of them ran here (not published, deselected or skipped)
+  reference only  status done, it names tests, but none of them ran here: each is in tests/unpublished.txt, or is
+                  published and was skipped
+  not in repo     status done, none of its tests ran here, and at least one names a test file that is not in tests/
+                  and not in tests/unpublished.txt. The test may exist in the private build; this repo cannot show it
   failing         a named test ran here and failed or errored
   no test         status deferred or not applicable: the note gives the reason instead
-Exit 1 with --check when the generated block differs, or whenever any claim is failing.
+A cited test whose file IS in tests/ but which that file does not define (a typo or a rename) is "unknown": it is
+neither of the above, it is a broken citation, and it makes the run exit 1.
+Exit 1 with --check when the generated block differs, or whenever any claim is failing or cites an unknown test.
 """
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import re
 import sys
@@ -36,7 +42,8 @@ CLAIMS = ROOT / "docs" / "claims"
 ROW = re.compile(r"^\|\s*(I(\d{1,2})\.\d+)\s*\|")
 AUDIT_ROW = re.compile(r"^\|\s*\d{1,2}\.\d+[\d.()]*\s*\|")
 TEST = re.compile(r"tests/(\w+)\.py::(\w+)")
-OUTCOMES = ("passing", "partly run", "reference only", "failing", "no test")
+TESTS = ROOT / "tests"
+OUTCOMES = ("passing", "partly run", "reference only", "not in repo", "failing", "no test")
 BEGIN, END = "<!-- claims:begin (scripts/claims.py --write) -->", "<!-- claims:end -->"
 
 
@@ -87,15 +94,54 @@ def junit_results(path: Path) -> dict[tuple[str, str], str]:
     return out
 
 
-def outcome(claim: dict, results: dict) -> str:
+def published() -> dict[str, set[str]]:
+    """test module -> the test functions it defines, read from the source of every tests/test_*.py in this repo."""
+    return {f.stem: {n.name for n in ast.parse(f.read_text()).body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+            for f in sorted(TESTS.glob("*.py"))}
+
+
+def unpublished() -> set[tuple[str, str]]:
+    """The (module, function) pairs tests/unpublished.txt lists: published tests deselected for want of an input."""
+    out = set()
+    for line in (TESTS / "unpublished.txt").read_text().splitlines():
+        if line.strip() and not line.startswith("#"):
+            m = TEST.search(line.split("#")[0])
+            if m:
+                out.add(m.groups())
+    return out
+
+
+def classify(test: tuple[str, str], results: dict, defined: dict[str, set[str]], listed: set) -> str:
+    """passed | failed | skipped | listed | absent (file not in tests/) | unknown (file here, no such function) | unrun."""
+    if test in results:
+        return results[test]
+    if test in listed:
+        return "listed"
+    if test[0] not in defined:
+        return "absent"
+    return "unrun" if test[1] in defined[test[0]] else "unknown"
+
+
+def outcome(claim: dict, results: dict, defined: dict | None = None, listed: set | None = None) -> str:
     if claim["status"] != "done":
         return "no test"
-    got = [results.get(t) for t in claim["tests"]]
+    defined = published() if defined is None else defined
+    listed = unpublished() if listed is None else listed
+    got = [classify(t, results, defined, listed) for t in claim["tests"]]
     if "failed" in got:
         return "failing"
     if got and all(g == "passed" for g in got):
         return "passing"
-    return "partly run" if "passed" in got else "reference only"
+    if "passed" in got:
+        return "partly run"
+    return "not in repo" if "absent" in got else "reference only"
+
+
+def unknown_tests(rows: list[dict], results: dict) -> list[str]:
+    """Cited tests that sit in a published file which defines no such function: a typo or a rename, never a reference."""
+    defined, listed = published(), unpublished()
+    return sorted({f"tests/{m}.py::{n}" for r in rows for m, n in r["tests"]
+                   if classify((m, n), results, defined, listed) == "unknown"})
 
 
 def table(rows: list[dict], results: dict | None) -> str:
@@ -108,17 +154,20 @@ def table(rows: list[dict], results: dict | None) -> str:
     if results is None:
         return "\n".join(lines)
     tests_named = {t for r in rows for t in r["tests"]}
+    defined, listed = published(), unpublished()
     ran = {t for t in tests_named if results.get(t) in ("passed", "failed")}
+    absent = {t for t in tests_named if classify(t, results, defined, listed) == "absent"}
     lines += [f"Distinct tests the claims name: {len(tests_named):,}. Ran in this repo: {len(ran):,} "
-              f"(passed {sum(results[t] == 'passed' for t in ran):,}, failed {sum(results[t] == 'failed' for t in ran):,}).",
-              "", "| chapter | claims | passing | partly run | reference only | failing | no test |",
-              "|---|---|---|---|---|---|---|"]
+              f"(passed {sum(results[t] == 'passed' for t in ran):,}, failed {sum(results[t] == 'failed' for t in ran):,}). "
+              f"Named but in a test file that is not in this repo: {len(absent):,} in {len({m for m, _ in absent}):,} files.",
+              "", "| chapter | claims | passing | partly run | reference only | not in repo | failing | no test |",
+              "|---|---|---|---|---|---|---|---|"]
     by = defaultdict(Counter)
     for r in rows:
-        by[r["chapter"]][outcome(r, results)] += 1
+        by[r["chapter"]][outcome(r, results, defined, listed)] += 1
     for ch in sorted(by):
         lines.append(f"| {ch} | {sum(by[ch].values())} | " + " | ".join(str(by[ch][o]) for o in OUTCOMES) + " |")
-    allc = Counter(outcome(r, results) for r in rows)
+    allc = Counter(outcome(r, results, defined, listed) for r in rows)
     lines.append(f"| **all** | **{len(rows):,}** | " + " | ".join(f"**{allc[o]:,}**" for o in OUTCOMES) + " |")
     return "\n".join(lines)
 
@@ -135,6 +184,7 @@ def main() -> int:
         print("no claims found under docs/claims/")       # an empty ledger must not read as a pass
         return 1
     results = junit_results(args.junit) if args.junit else None
+    defined, listed = published(), unpublished()
     block = table(rows, results)
     print(block)
     if args.csv and results is not None:
@@ -142,9 +192,13 @@ def main() -> int:
             w = csv.writer(fh)
             w.writerow(["id", "chapter", "section", "kind", "status", "outcome", "tests"])
             for r in rows:
-                w.writerow([r["id"], r["chapter"], r["section"], r["kind"], r["status"], outcome(r, results),
+                w.writerow([r["id"], r["chapter"], r["section"], r["kind"], r["status"], outcome(r, results, defined, listed),
                             " ".join(f"tests/{m}.py::{n}" for m, n in r["tests"])])
-    failing = results is not None and any(outcome(r, results) == "failing" for r in rows)
+    failing = results is not None and any(outcome(r, results, defined, listed) == "failing" for r in rows)
+    unknown = unknown_tests(rows, results) if results is not None else []
+    if unknown:                                        # a citation that points at nothing must not pass as a reference
+        print(f"\n{len(unknown)} cited test(s) are in a published test file that does not define them:")
+        print("\n".join("  " + u for u in unknown))
     target = args.write or args.check
     if target:
         text = target.read_text()
@@ -158,7 +212,7 @@ def main() -> int:
         elif new != text:
             print(f"\n{target} is out of date: run scripts/claims.py --junit <run> --write {target}")
             return 1
-    return 1 if failing else 0
+    return 1 if failing or unknown else 0
 
 
 if __name__ == "__main__":

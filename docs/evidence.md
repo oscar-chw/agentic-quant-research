@@ -23,7 +23,11 @@ python scripts/claims.py --junit /tmp/junit.xml --csv claims.csv       # one row
 
 - **passing**: status done, and every test the claim names ran here and passed.
 - **partly run**: at least one named test passed here; the others did not run here.
-- **reference only**: the claim names tests, but none of them ran here.
+- **reference only**: the claim names tests, but none of them ran here, because each is listed in
+  `tests/unpublished.txt` (its input is not published) or was skipped.
+- **not in repo**: none of the claim's tests ran here, and at least one is in a test file that is not in this repository
+  and not in `tests/unpublished.txt`. The test may exist in the private build; this repository cannot show it. A cited
+  test that sits in a published file which does not define it is a broken citation: `claims.py` exits 1.
 - **failing**: a named test ran here and failed. A failing claim makes `claims.py` exit 1.
 - **no test**: deferred or not applicable; the claim's note gives the reason.
 
@@ -32,33 +36,33 @@ python scripts/claims.py --junit /tmp/junit.xml --csv claims.csv       # one row
 
 Second reading: 276 headings audited, 111 right as written, 165 fixed; 1,826 claims counted in the text against 1,805 items.
 
-Distinct tests the claims name: 535. Ran in this repo: 449 (passed 449, failed 0).
+Distinct tests the claims name: 535. Ran in this repo: 449 (passed 449, failed 0). Named but in a test file that is not in this repo: 74 in 19 files.
 
-| chapter | claims | passing | partly run | reference only | failing | no test |
-|---|---|---|---|---|---|---|
-| 1 | 122 | 56 | 1 | 46 | 0 | 19 |
-| 2 | 161 | 97 | 1 | 33 | 0 | 30 |
-| 3 | 117 | 109 | 4 | 3 | 0 | 1 |
-| 4 | 125 | 122 | 2 | 1 | 0 | 0 |
-| 5 | 108 | 102 | 0 | 0 | 0 | 6 |
-| 6 | 82 | 59 | 7 | 6 | 0 | 10 |
-| 7 | 58 | 50 | 1 | 6 | 0 | 1 |
-| 8 | 102 | 92 | 0 | 9 | 0 | 1 |
-| 9 | 47 | 43 | 0 | 4 | 0 | 0 |
-| 10 | 44 | 40 | 3 | 0 | 0 | 1 |
-| 11 | 55 | 39 | 2 | 3 | 0 | 11 |
-| 12 | 60 | 54 | 3 | 3 | 0 | 0 |
-| 13 | 75 | 72 | 0 | 0 | 0 | 3 |
-| 14 | 93 | 81 | 2 | 3 | 0 | 7 |
-| 15 | 49 | 42 | 0 | 5 | 0 | 2 |
-| 16 | 79 | 30 | 6 | 37 | 0 | 6 |
-| 17 | 74 | 68 | 0 | 0 | 0 | 6 |
-| 18 | 79 | 70 | 0 | 0 | 0 | 9 |
-| 19 | 92 | 73 | 0 | 2 | 0 | 17 |
-| 20 | 68 | 59 | 0 | 2 | 0 | 7 |
-| 21 | 51 | 42 | 0 | 1 | 0 | 8 |
-| 22 | 64 | 17 | 0 | 2 | 0 | 45 |
-| **all** | **1,805** | **1,417** | **32** | **166** | **0** | **190** |
+| chapter | claims | passing | partly run | reference only | not in repo | failing | no test |
+|---|---|---|---|---|---|---|---|
+| 1 | 122 | 56 | 1 | 6 | 40 | 0 | 19 |
+| 2 | 161 | 97 | 1 | 5 | 28 | 0 | 30 |
+| 3 | 117 | 109 | 4 | 2 | 1 | 0 | 1 |
+| 4 | 125 | 122 | 2 | 1 | 0 | 0 | 0 |
+| 5 | 108 | 102 | 0 | 0 | 0 | 0 | 6 |
+| 6 | 82 | 59 | 7 | 5 | 1 | 0 | 10 |
+| 7 | 58 | 50 | 1 | 5 | 1 | 0 | 1 |
+| 8 | 102 | 92 | 0 | 5 | 4 | 0 | 1 |
+| 9 | 47 | 43 | 0 | 3 | 1 | 0 | 0 |
+| 10 | 44 | 40 | 3 | 0 | 0 | 0 | 1 |
+| 11 | 55 | 39 | 2 | 0 | 3 | 0 | 11 |
+| 12 | 60 | 54 | 3 | 0 | 3 | 0 | 0 |
+| 13 | 75 | 72 | 0 | 0 | 0 | 0 | 3 |
+| 14 | 93 | 81 | 2 | 0 | 3 | 0 | 7 |
+| 15 | 49 | 42 | 0 | 0 | 5 | 0 | 2 |
+| 16 | 79 | 30 | 6 | 0 | 37 | 0 | 6 |
+| 17 | 74 | 68 | 0 | 0 | 0 | 0 | 6 |
+| 18 | 79 | 70 | 0 | 0 | 0 | 0 | 9 |
+| 19 | 92 | 73 | 0 | 0 | 2 | 0 | 17 |
+| 20 | 68 | 59 | 0 | 2 | 0 | 0 | 7 |
+| 21 | 51 | 42 | 0 | 0 | 1 | 0 | 8 |
+| 22 | 64 | 17 | 0 | 0 | 2 | 0 | 45 |
+| **all** | **1,805** | **1,417** | **32** | **34** | **132** | **0** | **190** |
 <!-- claims:end -->
 
 **Why a named test may not run here.** The original build named 535 distinct tests; 449 of them ran here. The rest
@@ -72,7 +76,7 @@ fall into four groups:
    output, the recorded data cache or the heading index built from the book). `tests/conftest.py` fails the run if a
    line names a test that does not exist.
 3. **Skipped**: 15 meta-label tests need `xgboost`, which the original build also kept out of its main environment.
-4. **Not a test**: some evidence is a study report in the private repository. Such a claim counts as reference only.
+4. **Not a test**: some evidence is a study report in the private repository. Such a claim counts as reference only, or as not in repo when it also names a test file that is missing.
 
 Chapter 1 and chapter 22 are mostly about organisation and hardware. Most of their claims cite the design pages,
 plan files and hardware page of the private repository, or are not applicable to one machine, so they are rarely

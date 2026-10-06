@@ -117,7 +117,7 @@ hierarchical risk parity, structural breaks, entropy and microstructure features
 | Measure | Result | Evidence |
 |---|---|---|
 | Claims written | 1,805 across 22 chapters: 1,615 done, 31 deferred, 159 not applicable | [evidence (a)](docs/evidence.md#a-claims) |
-| Claims whose every named test passes here | 1,417 of 1,805 (of the 1,615 done: 1,417 pass, 32 partly run, 166 reference only, 0 failing) | [evidence (a)](docs/evidence.md#a-claims) |
+| Claims whose every named test passes here | 1,417 of 1,805 (of the 1,615 done: 1,417 pass, 32 partly run, 34 reference only, 132 not in repo, 0 failing) | [evidence (a)](docs/evidence.md#a-claims) |
 | Tests in a fresh environment | 758 passed, 15 skipped (xgboost absent), 23 deselected (inputs not published), 0 failed | [evidence (a)](docs/evidence.md#a-claims) |
 | Second reading by a different agent | 165 of 276 headings fixed, 111 right as written | [claims README](docs/claims/README.md#the-second-reading) |
 | Gated work graph, whole project | 266 gated tasks done of 285 nodes; 13 of 399 gate runs failed and sent their node back (book plans: 72 of 73, 5 of 116) | [evidence (b)](docs/evidence.md#b-orchestration) |
@@ -160,7 +160,7 @@ Docs: see [docs/README.md](docs/README.md).
 - **A different agent audits each chapter.** The cost was large, 165 headings reworked, but it found tests that
   could not fail.
 - **Deselect by name rather than delete.** Tests whose inputs stay private are listed with the reason, and their
-  claims count as "reference only", never as passing. The cost: 198 done claims are not fully checked here.
+  claims count as "reference only", never as passing; a claim that cites a test file absent from this repo is counted as "not in repo". The cost: 198 done claims are not fully checked here.
 - **Paraphrase, and refer to equations by section.** The notes stay legal to publish; the cost is that a reader needs
   the book to see the exact equations.
 
