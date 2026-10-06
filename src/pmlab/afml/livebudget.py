@@ -176,16 +176,21 @@ class WindowBudget:
         s = window_of(cost.second, self.window)
         for old in [w for w in self.seconds if w + STALE_AFTER < cost.second]:
             self.forget(old)
-        self.seconds[s] = self.seconds.get(s, 0) + 1
         self.seen_total += 1
         if s != self.last_window:
             self.windows_total += 1
             self.last_window = s
+        if self.worst is None or cost.total_ms > self.worst.total_ms:
+            self.worst = cost
+        if cost.events <= 0:                              # an idle second is no evidence: it stays out of the window's books,
+            if cost.total_ms > self.deadline_ms:          # but a missed clock is missed whether or not anything was fed
+                self.over_total += 1
+                return self._alert(cost, s, "deadline")
+            return None
+        self.seconds[s] = self.seconds.get(s, 0) + 1
         totals = self.totals.setdefault(s, {f"{k}_ms": 0.0 for k in STAGES})
         for stage in STAGES:
             totals[f"{stage}_ms"] += getattr(cost, f"{stage}_ms")
-        if self.worst is None or cost.total_ms > self.worst.total_ms:
-            self.worst = cost
         if cost.total_ms <= self.ceiling_ms:
             return None
         self.breaches.setdefault(s, []).append(cost)
@@ -213,7 +218,7 @@ class WindowBudget:
         self.serial += 1
         self.alerts_total += 1
         breached = self.breaches.get(window, [])
-        worst = max(breached, key=lambda x: x.total_ms)
+        worst = max(breached, key=lambda x: x.total_ms) if breached else cost   # an idle second can miss the deadline
         n = max(self.seconds.get(window, 1), 1)
         totals = self.totals.get(window, {})
         if rule == "deadline":
