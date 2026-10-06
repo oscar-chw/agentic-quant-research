@@ -1,0 +1,24 @@
+# Tests that need an input this repo does not publish. tests/conftest.py deselects each one by node id and fails the
+# run if a line names a test that does not exist. scripts/claims.py counts a claim whose tests are all listed here
+# as "test referenced, not run here". Format: <node id>  # <the missing input>
+tests/test_afml_events.py::test_a_build_survives_an_outcome_neutral_library_change_but_not_any_other  # the event-study script (scripts/afml_events.py)
+tests/test_book_v2_chapters_1_5.py::test_the_five_parts_of_the_book_partition_the_chapters_in_the_order_they_are_read  # the heading index built from the book text
+tests/test_book_v2_chapters_1_5.py::test_the_bar_study_settles_the_books_comparative_claims_on_this_market  # the bar study's output (research/bar_study.json)
+tests/test_data.py::test_closes_extend_back_over_contiguous_cached_windows_only  # the recorded market-data cache
+tests/test_feature_importance.py::test_every_folds_permutation_groups_must_agree_with_fold_zeros  # the feature-importance study script
+tests/test_feature_importance.py::test_fold_statistics_holm_and_block_means_hand_cases  # the feature-importance study script
+tests/test_feature_importance.py::test_keep_needs_holm_and_both_halves_and_the_k_check_flags_a_rising_loss  # the feature-importance study script
+tests/test_meta_label.py::test_grid_search_picks_the_planted_best_parameter_scores_weighted_log_loss_and_ledgers_every_candidate  # the trial-registry script
+tests/test_meta_label.py::test_the_stage_4_feature_sets_are_the_baseline_plus_stage_3s_kept_clusters  # the meta-label study script and its outputs
+tests/test_meta_label.py::test_reliability_buckets_weigh_each_independent_label_once_and_give_the_brier_score  # the meta-label study script
+tests/test_meta_label.py::test_the_filter_check_takes_only_signals_whose_probability_clears_their_cost  # the meta-label study script
+tests/test_meta_label.py::test_the_runner_refuses_to_start_in_the_registered_environment  # the meta-label study script
+tests/test_meta_label_leaks.py::test_the_stage_4_sample_never_reads_a_day_that_reaches_the_confirmation_start  # the meta-label study script
+tests/test_meta_label_leaks.py::test_the_stage_4_label_permutation_keeps_one_shuffled_outcome_per_window  # the meta-label study script
+tests/test_afml_break_features.py::test_no_kline_at_or_after_the_confirmation_start_is_read  # the break-feature study script
+tests/test_afml_break_features.py::test_the_build_refuses_a_window_that_ends_after_the_confirmation_start  # the break-feature study script
+tests/test_family_importance.py::test_the_second_baseline_is_what_stage_three_kept  # the feature-importance study output (research/feature_importance.json)
+tests/test_family_importance.py::test_the_embargo_is_the_library_one_and_is_never_shortened  # the family-importance study script
+tests/test_family_importance.py::test_the_dispatch_that_reaches_this_runner_needs_nothing_of_stage_threes_run  # the feature-importance study script
+tests/test_registry.py::test_a_package_source_imports_every_submodule_that_is_not_private  # the unpublished pmlab.markets package
+tests/test_registry.py::test_the_live_strategies_the_app_assembles_are_all_reachable_by_name  # the live strategies' parameters (research/strategy_params.json)

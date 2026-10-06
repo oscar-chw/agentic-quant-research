@@ -1,0 +1,8 @@
+# Pinned to the versions the original build ran with (Python 3.11).
+numpy==2.4.6
+pandas==3.0.5
+scipy==1.17.1
+scikit-learn==1.9.1
+pyarrow==25.0.1
+requests==2.34.2
+pytest==9.1.1

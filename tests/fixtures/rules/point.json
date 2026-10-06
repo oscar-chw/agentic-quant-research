@@ -1,0 +1,11 @@
+{
+ "start": 1784430000,
+ "slug": "btc-updown-5m-1784430000",
+ "condition_id": "0x6592144ffa13bb1bc8529e1e1f5c9021cf4cb22e1f633a8d92fbd8e9c3886bfe",
+ "resolved": true,
+ "up_won": false,
+ "twap_lookback": null,
+ "description": "This market will resolve to \"Up\" if the Bitcoin price at the end of the time range specified in the title is greater than or equal to the price at the beginning of that range. Otherwise, it will resolve to \"Down\".\nThe resolution source for this market is information from Chainlink, specifically the BTC/USD data stream available at https://data.chain.link/streams/btc-usd.\nPlease note that this market is about the price according to Chainlink data stream BTC/USD, not according to other sources or spot markets.",
+ "resolutionSource": "https://data.chain.link/streams/btc-usd",
+ "cryptoMarketConfig": null
+}

@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# The book and anything extracted from it never enter this repository.
+*.epub
+*.pdf
