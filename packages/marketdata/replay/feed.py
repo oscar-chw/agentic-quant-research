@@ -23,21 +23,24 @@ of ``replay.book``; a value off the grid is refused, never rounded.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from fractions import Fraction
 
 from replay.book import PRICE_SCALE, SIDE_ASK, SIDE_BID, SIZE_SCALE, Book, Level
 
+_DECIMAL = re.compile(r"[0-9]+(?:\.[0-9]+)?")
 SIDES = {"BUY": SIDE_BID, "SELL": SIDE_ASK}
 
 
 def _exact(text, scale, what):
     if not isinstance(text, str):
         raise ValueError(f"{what} must be a decimal string")
-    try:
-        value = Fraction(text) * scale
-    except (ValueError, ZeroDivisionError):
-        raise ValueError(f"{what} is not a decimal: {text!r}") from None
+    # Fraction alone also takes "-5", "47/100", "1e2" and padded text, none of which is a plain decimal;
+    # a negative size would rest a level of negative size in every book after it.
+    if not _DECIMAL.fullmatch(text):
+        raise ValueError(f"{what} is not a plain non-negative decimal: {text!r}")
+    value = Fraction(text) * scale
     if value.denominator != 1:
         raise ValueError(f"{what} {text} is not a multiple of 1/{scale}")
     return int(value)

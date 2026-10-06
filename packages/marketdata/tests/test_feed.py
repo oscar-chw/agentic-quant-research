@@ -30,6 +30,15 @@ def test_exact_scaling_refuses_values_off_the_grid():
         scale_size(3)
 
 
+@pytest.mark.parametrize("bad", ["-5", "-0.47", "+5", "47/100", "1e2", " 3", "3 ", "1_0", ".5", "5.", "٣"])
+def test_exact_scaling_refuses_anything_but_a_plain_non_negative_decimal(bad):
+    for convert in (scale_price, scale_size):
+        with pytest.raises(ValueError, match="plain non-negative decimal"):
+            convert(bad)
+    with pytest.raises(ValueError, match="plain non-negative decimal"):
+        Feed().apply(change(1, ("BUY", "0.49", bad)))
+
+
 def test_a_snapshot_becomes_a_sorted_keyframe_without_zero_rows():
     feed = Feed()
     update = feed.apply(book(5, [("0.49", "3"), ("0.48", "0"), ("0.47", "1"), ("0.47", "2")], [("0.51", "1")]))
