@@ -43,6 +43,13 @@ def test_replay_is_bound_to_the_exact_prompt(tmp_path):
         provider.complete("other", b"ask")
 
 
+@pytest.mark.parametrize("response", [None, 7, {"a": 1}, ["x"]])
+def test_replay_entry_with_a_non_string_response_is_a_clear_error(tmp_path, response):
+    path = replay_file(tmp_path, [{"key": "k", "prompt_sha256": prompt_sha256(b"ask"), "response": response}])
+    with pytest.raises(ValueError, match="'k': response must be a string"):
+        ReplayProvider(path)
+
+
 @pytest.mark.parametrize("body", [
     {"schema": "qrae.llm-replay/v1", "provenance": "", "entries": []},
     {"schema": "other", "provenance": "x", "entries": []},

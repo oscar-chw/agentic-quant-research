@@ -71,6 +71,8 @@ class ReplayProvider:
             if not isinstance(entry, dict) or set(entry) != {"key", "prompt_sha256", "response"} \
                     or entry["key"] in self.entries:
                 raise ValueError("replay entries need a unique key, prompt_sha256 and response")
+            if not isinstance(entry["response"], str):
+                raise ValueError(f"replay entry {entry['key']!r}: response must be a string")
             self.entries[entry["key"]] = entry
 
     def complete(self, key: str, prompt: bytes) -> str:
