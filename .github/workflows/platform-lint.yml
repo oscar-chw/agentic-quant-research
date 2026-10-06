@@ -1,4 +1,6 @@
-name: lint
+# The platform's lint with its own ruff.toml (its per-file ignores keep two frozen imc-sim files byte-identical).
+# Own concurrency group: sharing lint.yml's "lint-<ref>" would let each workflow cancel the other.
+name: platform-lint
 on:
   push:
     branches: [main]
@@ -6,11 +8,14 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: lint-${{ github.ref }}
+  group: platform-lint-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   ruff:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

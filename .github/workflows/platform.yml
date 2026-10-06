@@ -1,7 +1,8 @@
-# Every package's tests, the optional C++ path and the offline demo (scripts/check.sh).
-# macOS because the pybind11 module is built and verified there (packages/marketdata/native);
-# check.sh builds and tests native whenever clang++ and pybind11 are present, else says SKIPPED.
-name: ci
+# The point-in-time research platform's gate (platform/scripts/check.sh): every package's tests, the optional
+# C++ path and the offline demo. macOS because the pybind11 module is built and verified there
+# (platform/packages/marketdata/native); check.sh builds and tests native whenever clang++ and pybind11 are
+# present, else says SKIPPED. Moved from the platform's own .github/, which GitHub never runs in a subfolder.
+name: platform
 on:
   push:
   pull_request:
@@ -12,6 +13,9 @@ jobs:
   check:
     runs-on: macos-14
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: platform
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

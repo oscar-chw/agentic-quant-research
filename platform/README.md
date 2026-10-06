@@ -1,6 +1,6 @@
 # asof-research: can an LLM pick better trading hypotheses than brute force?
 
-[![ci](https://github.com/oscar-chw/asof-research/actions/workflows/ci.yml/badge.svg)](https://github.com/oscar-chw/asof-research/actions/workflows/ci.yml) [![lint](https://github.com/oscar-chw/asof-research/actions/workflows/lint.yml/badge.svg)](https://github.com/oscar-chw/asof-research/actions/workflows/lint.yml)
+[![platform](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/platform.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/platform.yml) [![platform-lint](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/platform-lint.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/platform-lint.yml)
 
 A point-in-time ("as-of") research harness, for quant researchers and anyone reviewing LLM-driven research, that tests an LLM's
 trading hypotheses without trusting it: every hypothesis is frozen before it is scored, code the model never touches computes

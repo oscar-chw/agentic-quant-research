@@ -1,3 +1,5 @@
 # Correctness-only lint (syntax errors, pyflakes). Style is not enforced: README evidence cites line numbers.
+# platform/ is linted by platform-lint.yml with its own ruff.toml; this config would flag its frozen imc-sim files.
+extend-exclude = ["platform"]
 [lint]
 select = ["E9", "F"]

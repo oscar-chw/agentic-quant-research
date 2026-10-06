@@ -1,6 +1,6 @@
 # AI Quant Research System: From a Textbook to a Tested Library with Gated Agents
 
-[![ci](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/ci.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/ci.yml) [![lint](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/lint.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/lint.yml)
+[![ci](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/ci.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/ci.yml) [![lint](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/lint.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/lint.yml) [![platform](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/platform.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/platform.yml) [![platform-lint](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/platform-lint.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/platform-lint.yml)
 
 This is the front page of Oscar's AI quant research system: a vault that keeps book notes and measured results as
 cited, version-controlled notes, a harness whose gates decide when work is done, and AI coding agents that read,
