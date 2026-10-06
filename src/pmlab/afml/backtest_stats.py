@@ -125,5 +125,13 @@ def capacity(pnl, stake, impact: float, target_sharpe: float, periods_per_year: 
         hi *= 2.0
         if hi > max_multiple:
             return out | {"multiple": np.inf, "capacity": np.inf}
-    m = float(brentq(excess, hi / 2 if hi > 1 else 0.0, hi, xtol=1e-12, rtol=1e-12))
+    lo = hi / 2
+    if hi == 1.0:                                  # already past capacity: the root is below 1, and excess(0) is a 0/0 sentinel
+        lo = 0.5
+        while excess(lo) <= 0:                     # the net Sharpe tends to the gross one (> target) as m -> 0, so this ends
+            lo /= 2.0
+            if lo < 1e-300:
+                return out | {"multiple": 0.0, "capacity": 0.0}
+        hi = lo * 2.0
+    m = float(brentq(excess, lo, hi, xtol=1e-12, rtol=1e-12))
     return out | {"multiple": m, "capacity": m * avg_aum}

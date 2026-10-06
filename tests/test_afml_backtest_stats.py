@@ -86,6 +86,23 @@ def test_capacity_is_the_largest_size_whose_impact_cost_still_reaches_the_target
 
 
 @pytest.mark.case
+def test_capacity_below_one_is_a_multiple_below_one_not_an_error():
+    """A book already past its capacity (multiple < 1) used to raise brentq's 'f(a) and f(b) must have different signs',
+    because the bracket was [0, 1] with excess(0) a 0/0 sentinel. The report calls capacity() unguarded, so it must
+    return the shrink factor. Constant stake: the multiple is (mu - theta sigma / sqrt(n)) / (lambda s^2) exactly."""
+    r = np.array([0.4, -0.2, 0.9, -0.5, 0.3, 0.1])
+    s = np.full(6, 10.0)
+    theta, n = 1.0, 52.0
+    mu, sigma = r.mean(), r.std(ddof=1)
+    lam = (mu - theta * sigma / np.sqrt(n)) / (0.3 * s[0] ** 2)            # puts the true multiple at 0.3
+    got = bt.capacity(r, s, lam, theta, n, avg_aum=250.0)
+    assert got["multiple"] == pytest.approx(0.3, rel=1e-9)
+    assert got["capacity"] == pytest.approx(0.3 * 250.0, rel=1e-9)
+    lam = lam * 1e6                                                        # far past capacity: a tiny but positive multiple
+    assert 0.0 < bt.capacity(r, s, lam, theta, n)["multiple"] < 1e-5
+
+
+@pytest.mark.case
 def test_the_four_degenerate_cases_of_binary_classification():
     """Table 14.1, with 14.8's F1 as the harmonic mean of precision and recall. Observed all 1s: no TN and no FP, so
     precision is 1, accuracy equals recall and F1 = 2 recall / (1 + recall) >= recall. Observed all 0s: no TP and no
