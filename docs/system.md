@@ -24,7 +24,7 @@ uniqueness only from 0.205 to 0.212, and recorded as not applicable with those n
 ([claims/ch07.md](claims/ch07.md)).
 
 ```mermaid
-flowchart LR
+flowchart TB
     SEC["Book section"]:::ext
     ROW["Claim row<br/>paraphrased"]:::data
     ST{"status"}:::gate
@@ -32,7 +32,7 @@ flowchart LR
     AUD["Second reading:<br/>can it fail?"]:::gate
     NOTE["Note: what was<br/>measured here"]:::out
     SEC -->|"reader agent"| ROW
-    ROW --> ST
+    ROW -->|"assigned"| ST
     ST -->|"done"| TEST
     ST -->|"deferred or n/a:<br/>reason"| NOTE
     TEST -->|"other agent audits"| AUD
@@ -88,16 +88,16 @@ sequenceDiagram
     participant O as Oscar
     participant C as Orchestrator
     participant P as plan graph
-    participant B as Builder subagent
-    participant R as Reviewer subagent
-    O->>C: goal and constraints
+    participant B as Builder
+    participant R as Reviewer
+    O->>C: goal and<br/>constraints
     C->>P: nodes with gates
-    C->>B: a node, its claims, its files
-    B->>B: code and its test
+    C->>B: node, claims,<br/>files
+    B->>B: code and<br/>its test
     B-->>C: reports done
-    C->>P: plan gate N runs pytest
-    P-->>C: exit code, evidence appended
-    C->>R: selected diffs it did not write
+    C->>P: plan gate N<br/>runs pytest
+    P-->>C: exit code,<br/>evidence appended
+    C->>R: diffs it<br/>did not write
     R-->>C: findings to fix
 ```
 
@@ -111,13 +111,19 @@ He reviewed the results. The agents wrote the claims, the code, the tests and th
 ## Where this sits among the other repositories
 
 ```mermaid
-timeline
-    title What came before and after
-    April 2026 : quant-research-vault, the paper layer
-    July 2026 : Polymarket-Crypto-5min, an earlier separate experiment, not built from the book
-    17 to 21 Sep 2026 : this build, AFML to a tested library under the gated harness
-    Late Sep 2026 : agent-harness, the harness practices packaged
+flowchart TB
+    V["April 2026<br/>quant-research-vault<br/>the paper layer"]:::data
+    P["July 2026<br/>Polymarket-Crypto-5min<br/>separate, not from the book"]:::ext
+    B["17 to 21 Sep 2026<br/>this build: AFML to<br/>a tested library"]:::key
+    H["Late Sep 2026<br/>agent-harness<br/>practices packaged"]:::step
+    V -->|"then"| P
+    P -->|"then"| B
+    B -->|"then"| H
+    classDef data fill:#dbeafe,stroke:#1d4ed8,color:#0b1220
+    classDef step fill:#f1f5f9,stroke:#475569,color:#0b1220
+    classDef ext fill:#f8fafc,stroke:#94a3b8,color:#0b1220,stroke-dasharray:4 3
+    classDef key fill:#ede9fe,stroke:#6d28d9,color:#0b1220,stroke-width:2px
 ```
 
 [Polymarket-Crypto-5min](https://github.com/oscar-chw/Polymarket-Crypto-5min) is an earlier, separate experiment
-(July 2026), not built from the book.
+(July 2026), not built from the book. Every component, with its role and key numbers: [the README](../README.md#components-of-the-system).

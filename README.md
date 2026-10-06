@@ -1,46 +1,41 @@
-# Agentic Quant Research: a Finance ML Book Turned into a Tested Library by Gated AI Agents
+# AI Quant Research System: From a Textbook to a Tested Library with Gated Agents
 
 [![ci](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/ci.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/ci.yml) [![lint](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/lint.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/lint.yml)
 
-This is Oscar's AI quant research system, shown through its one complete build. Over about four days in September
-2026, a Claude Code orchestrator and its subagents, held to a gated work graph, turned López de Prado's *Advances in
-Financial Machine Learning* into 1,805 paraphrased, cited claims and a tested Python library. In this repository,
-1,417 of those claims have every test they name passing, and 758 tests pass in a fresh environment; every other claim
-is listed with the reason it does not run here.
+This is the front page of Oscar's AI quant research system: a vault that keeps book notes and measured results as
+cited, version-controlled notes, a harness whose gates decide when work is done, and AI coding agents that read,
+build and review. Its centrepiece is one complete build: over about four days in September 2026, a Claude Code
+orchestrator and its subagents turned López de Prado's *Advances in Financial Machine Learning* into 1,805
+paraphrased, cited claims and a tested Python library. The result in this repository: 1,400+ extracted claims
+verified by passing tests (758 tests, 0 failing). Across the whole project, the orchestrator and about 140 AI
+subagents (per private session logs) completed 266 gated tasks.
 
-The system has three parts: a vault, which Oscar designed as the system's second brain; a harness whose gates decide
-when work is done; and the agents. Book knowledge goes into the vault as claims, the agents build from it under the
-harness, and what the tests and studies measure is written back next to the claims:
+How the parts connect (purple marks this repository; every other named repository is a separate component):
 
 ```mermaid
 flowchart TB
     OSCAR["Oscar<br/>goals and review"]:::ext
-    BOOK["AFML, 22 chapters<br/>private copy"]:::ext
+    GRAPH{"plan gate graph<br/>exit 0 = done"}:::gate
+    AGENTS["AI coding agents<br/>Claude Code, subagents"]:::step
     subgraph VAULT["Vault: the second brain"]
         direction LR
-        CLAIMS[("Book layer<br/>1,805 claims")]:::key
-        PAPERS[("Paper layer<br/>quant-research-vault")]:::ext
-        RESULTS[("Results layer<br/>measured notes")]:::data
+        BOOK[("Book notes and<br/>measured results<br/>this repo")]:::key
+        PAPERS[("Paper layer<br/>quant-research-vault")]:::data
     end
-    subgraph HARNESS["Harness: plan gate graph"]
-        direction LR
-        ORCH["Claude Code<br/>orchestrator"]:::step
-        GATE{"gate<br/>exit 0?"}:::gate
-    end
-    AGENTS["Subagents: builders,<br/>reviewers, auditors"]:::step
-    LIB["pmlab library<br/>and tests"]:::out
-    OSCAR -->|"goals, constraints"| ORCH
-    BOOK -->|"read section by section"| AGENTS
-    AGENTS ==>|"paraphrase, cite section"| CLAIMS
-    CLAIMS ==>|"each claim names a test"| ORCH
-    ORCH ==>|"briefs nodes"| AGENTS
+    LIB["pmlab library<br/>and tests, this repo"]:::key
+    AH["agent-harness<br/>rules, memory,<br/>guard, work graph"]:::step
+    ASOF["asof-research<br/>LLM proposes, code<br/>scores, human decides"]:::step
+    PM["Polymarket-Crypto-5min<br/>July 2026, separate,<br/>not from the book"]:::ext
+    OSCAR -->|"goals, constraints"| GRAPH
+    OSCAR -.->|"earlier experiment"| PM
+    GRAPH ==>|"briefs nodes"| AGENTS
+    GRAPH -.->|"practices<br/>packaged later"| AH
+    AGENTS ==>|"paraphrase, cite"| BOOK
+    PAPERS -.->|"MCP search,<br/>not used here"| AGENTS
+    BOOK ==>|"each claim<br/>names a test"| LIB
     AGENTS ==>|"code and tests"| LIB
-    LIB ==>|"pytest"| GATE
-    GATE -->|"non-zero: back to pending"| ORCH
-    GATE ==>|"exit 0: node done"| ORCH
-    AGENTS -->|"record what was measured"| RESULTS
-    RESULTS -.->|"written back"| CLAIMS
-    PAPERS -.->|"not queried in this build"| ORCH
+    LIB ==>|"pytest exit code"| GRAPH
+    AGENTS -.->|"also implemented"| ASOF
     classDef data fill:#dbeafe,stroke:#1d4ed8,color:#0b1220
     classDef step fill:#f1f5f9,stroke:#475569,color:#0b1220
     classDef gate fill:#fef3c7,stroke:#b45309,color:#0b1220
@@ -49,9 +44,21 @@ flowchart TB
     classDef key fill:#ede9fe,stroke:#6d28d9,color:#0b1220,stroke-width:2px
 ```
 
-Where in the code: `docs/claims/` (book layer), `plan/` (the gate graph), `src/pmlab/afml/` and `tests/` (library),
-[docs/system.md](docs/system.md) (how the parts work). The system was a set of local sessions and is no longer
-running; this is its record, the library and the tests.
+Where in the code: `docs/claims/` (book notes), `plan/` (the gate graph), `src/pmlab/afml/` and `tests/` (library);
+[docs/system.md](docs/system.md) explains how the parts work. The build ran as local sessions that are no longer
+running; this repository is its record, the library and the tests.
+
+## Components of the system
+
+Each row is a separate repository; its role and numbers are taken from that repository's README.
+
+| Component | Repo | Role in the system | Key evidence |
+|---|---|---|---|
+| Book-to-library build (centrepiece) | this repo | The vault's book and results notes, and the library built from them under the gate graph | 1,417 of 1,805 claims have every named test passing; 758 tests pass, 0 fail ([evidence](docs/evidence.md#a-claims)) |
+| Vault, paper layer | [quant-research-vault](https://github.com/oscar-chw/quant-research-vault) | arXiv and OpenAlex metadata into SQLite, indexed in ChromaDB, searched read-only over MCP; not used in this build | 5 offline tests pass; 18,492 paper rows in its local, unpublished database at a 2026-07-30 audit |
+| Research harness | [asof-research](https://github.com/oscar-chw/asof-research) | Point-in-time harness: an LLM proposes hypotheses but never scores them; a pre-registered gate, then a human or a pre-registered rule decides. Also holds the factor lab and an order-book replay package | REAL Binance data, 34 pairs: the gate blocked both control picks, which lost 6.9 and 7.4 bps/day out of sample; the LLM arm is pending until 2027-08-31 |
+| Agent harness | [agent-harness](https://github.com/oscar-chw/agent-harness) | The rules, memory, command guard and gated work graph, packaged as one install for AI coding tools | Held-out guard set: 39 of 45 dangerous commands blocked, 20 of 20 safe ones allowed; 836 tests pass (v0.3.2) |
+| Earlier experiment | [Polymarket-Crypto-5min](https://github.com/oscar-chw/Polymarket-Crypto-5min) | July 2026, separate, not built from the book: a point-in-time walk-forward backtester for Polymarket's Bitcoin 5-minute markets | Found and fixed a look-ahead leak; the corrected selected result is negative (−$12.31 on $160 staked, 16 trades) |
 
 ## Why this exists
 
@@ -77,7 +84,7 @@ makes can be traced to a test that would fail if the code got it wrong.
 How one claim moves through that loop:
 
 ```mermaid
-flowchart LR
+flowchart TB
     SEC["Book section"]:::ext
     ROW["Claim row<br/>paraphrased"]:::data
     ST{"status"}:::gate
@@ -85,7 +92,7 @@ flowchart LR
     AUD["Second reading:<br/>can it fail?"]:::gate
     NOTE["Note: what was<br/>measured here"]:::out
     SEC -->|"reader agent"| ROW
-    ROW --> ST
+    ROW -->|"assigned"| ST
     ST -->|"done"| TEST
     ST -->|"deferred or n/a:<br/>reason"| NOTE
     TEST -->|"other agent audits"| AUD
@@ -110,10 +117,11 @@ hierarchical risk parity, structural breaks, entropy and microstructure features
 | Measure | Result | Evidence |
 |---|---|---|
 | Claims written | 1,805 across 22 chapters: 1,615 done, 31 deferred, 159 not applicable | [evidence (a)](docs/evidence.md#a-claims) |
-| Done claims whose every named test passes here | 1,417 of 1,615; 32 partly run, 166 reference only, 0 failing | [evidence (a)](docs/evidence.md#a-claims) |
+| Claims whose every named test passes here | 1,417 of 1,805 (of the 1,615 done: 1,417 pass, 32 partly run, 166 reference only, 0 failing) | [evidence (a)](docs/evidence.md#a-claims) |
 | Tests in a fresh environment | 758 passed, 15 skipped (xgboost absent), 23 deselected (inputs not published), 0 failed | [evidence (a)](docs/evidence.md#a-claims) |
 | Second reading by a different agent | 165 of 276 headings fixed, 111 right as written | [claims README](docs/claims/README.md#the-second-reading) |
-| Gated work graph, book plans | 72 of 73 nodes done; 5 of 116 gate runs failed and sent their node back (whole project: 266 of 285, 13 of 399) | [evidence (b)](docs/evidence.md#b-orchestration) |
+| Gated work graph, whole project | 266 gated tasks done of 285 nodes; 13 of 399 gate runs failed and sent their node back (book plans: 72 of 73, 5 of 116) | [evidence (b)](docs/evidence.md#b-orchestration) |
+| Subagents, whole project | about 140 AI subagents (per private session logs); approximate, not reproducible here | [evidence (b)](docs/evidence.md#b-orchestration) |
 | Copy check against the book | longest shared run 14 words (formula symbols); limit 15 | [evidence](docs/evidence.md#copyright-the-copy-check) |
 | Leakage demo, SYNTHETIC | irrelevant feature: 0.73 accuracy under shuffled k-fold, 0.49 under purged k-fold | [scripts/demo.py](scripts/demo.py) |
 
@@ -169,7 +177,7 @@ Docs: see [docs/README.md](docs/README.md).
 - The claims were audited by agents, not by an outside expert in the book.
 - The paper layer of the vault was not used in this build.
 
-## What I learned
+## Lessons
 
 Each lesson is a conclusion the build's own records state.
 
@@ -187,10 +195,7 @@ Each lesson is a conclusion the build's own records state.
 ## Credits and licence
 
 Built from Marcos López de Prado, *Advances in Financial Machine Learning* (Wiley, 2018), which is cited by chapter
-and section and not reproduced. The harness practices are packaged in
-[agent-harness](https://github.com/oscar-chw/agent-harness); the paper layer is
-[quant-research-vault](https://github.com/oscar-chw/quant-research-vault).
-[Polymarket-Crypto-5min](https://github.com/oscar-chw/Polymarket-Crypto-5min) is an earlier, separate experiment
-(July 2026), not built from the book. Code licence: MIT ([LICENSE](LICENSE)).
+and section and not reproduced. The other components are listed in
+[Components of the system](#components-of-the-system). Code licence: MIT ([LICENSE](LICENSE)).
 
 Implemented with AI coding agents under Oscar's design and review.
