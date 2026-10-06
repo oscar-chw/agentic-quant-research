@@ -158,6 +158,9 @@ file is missing. It prints file names and run lengths only. Results on 6 October
 | PDF text layer | 192 | 14 words: formula symbols in a code comment | `src/pmlab/afml/breaks.py` |
 | EPUB text | 192 | 12 words: a list of names from one of the book's tables | `docs/claims/ch01.md` |
 
+Both runs predate the point-in-time research platform (platform/), added to this repository on 6 October 2026, so
+its files are not among the 192. Re-running the command above covers them.
+
 Before publication the check also found three quoted sentences in test docstrings (15 to 21 words) and a run of
 figure captions. These were reworded, as were 12 claim statements that shared 11 to 14 words with the book.
 AFML-specific equations are referred to by section ("the book's equation in this section") rather than spelled out.

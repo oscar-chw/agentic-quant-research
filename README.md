@@ -124,7 +124,7 @@ hierarchical risk parity, structural breaks, entropy and microstructure features
 | Second reading by a different agent | 165 of 276 headings fixed, 111 right as written | [claims README](docs/claims/README.md#the-second-reading) |
 | Gated work graph, whole project | 266 gated tasks done of 285 nodes; 13 of 399 gate runs failed and sent their node back (book plans: 72 of 73, 5 of 116) | [evidence (b)](docs/evidence.md#b-orchestration) |
 | Subagents, whole project | about 140 AI subagents (per private session logs); approximate, not reproducible here | [evidence (b)](docs/evidence.md#b-orchestration) |
-| Copy check against the book | longest shared run 14 words (formula symbols); limit 15 | [evidence](docs/evidence.md#copyright-the-copy-check) |
+| Copy check against the book | longest shared run 14 words (formula symbols); limit 15; run before platform/ was added | [evidence](docs/evidence.md#copyright-the-copy-check) |
 | Leakage demo, SYNTHETIC | irrelevant feature: 0.73 accuracy under shuffled k-fold, 0.49 under purged k-fold | [scripts/demo.py](scripts/demo.py) |
 
 No trading result is claimed: the build's Polymarket studies are not published here.

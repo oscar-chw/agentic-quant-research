@@ -180,6 +180,7 @@ test ([selection.json](docs/evidence/selection.json)).</sub>
 ## Quick start
 
 ```sh
+cd platform                                 # in a clone of agentic-quant-research; every command runs here
 python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
 bash scripts/demo.sh                        # offline, seconds: the loop on SYNTHETIC panels, then the v1 table
 bash scripts/check.sh                       # every suite (it prints each count), C++ if clang++ exists, the demo
