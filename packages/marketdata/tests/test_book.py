@@ -143,7 +143,7 @@ def outcome(call):
 
 def test_every_recorded_golden_outcome():
     cases = list(golden_cases(GOLDEN.read_text()))
-    assert len(cases) == 246  # 6 fixtures + 240 random; a truncated file must not pass
+    assert len(cases) == 247  # 7 fixtures + 240 random; a truncated file must not pass
     kinds = set()
     for c in cases:
         frames, deltas, coverage, queries = c["frames"], c["deltas"], c["coverage"], c["queries"]

@@ -68,7 +68,7 @@ FIXED = list(fixed_cases(Level))
 
 def test_fixture_and_random_case_counts():
     # Absence policy: a renamed or emptied generator must not pass by comparing nothing.
-    assert len(FIXED) == 6 and RANDOM_CASES == 240
+    assert len(FIXED) == 7 and RANDOM_CASES == 240
 
 
 @pytest.mark.parametrize("case", FIXED, ids=[case[0] for case in FIXED])

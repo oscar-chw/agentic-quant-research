@@ -67,7 +67,7 @@ It was first recorded from the Python implementation this package shipped until
 2026-10-04; `replay.book`, written fresh to the same contract, reproduces it, and
 [`../tests/test_workload.py`](../tests/test_workload.py) pins it without C++. The exported
 message stream is pinned the same way (sha256 `67d36ed8…aebc`). [`tests/golden/reference_cases.txt`](tests/golden/reference_cases.txt)
-holds 246 cases recorded from the Python reference: 6 hand-written fixtures
+holds 247 cases recorded from the Python reference: 7 hand-written fixtures
 and 240 randomized histories with gaps, overlapping epochs, keyframes
 sharing a timestamp, duplicate snapshot rows and unsorted input. Across those
 cases, C++ matches every recorded batch outcome and every per-query scalar
@@ -218,5 +218,5 @@ Lessons from what this folder records (confirmed by the author, 2026-10-03).
   Source: Limits above.
 - **Byte-identical canonical output is the parity test that scales.** One
   digest over 2,782 bytes of canonical JSON on the 100,000-message workload,
-  plus 246 recorded reference cases, checks the whole port at once instead of
+  plus 247 recorded reference cases, checks the whole port at once instead of
   spot values. Source: Results above and `tests/golden/reference_cases.txt`.

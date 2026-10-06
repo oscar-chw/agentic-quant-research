@@ -109,6 +109,19 @@ scalar error NotCovered covered at 3000 but no keyframe in coverage epoch starti
 scalar book 1 0 4000 999
 scalar book 1 1 9000 999
 end
+case same-ms-change
+K 1000 2 0 4700 1000 1 5100 100
+K 1000 1 1 5100 100
+D 1000 0 4700 0
+D 1005 1 5200 200
+C 0 -
+Q 1005 1000
+batch books
+B 2 1 5100 100 1 5200 200
+B 1 1 5100 100
+scalar book 2 1 5100 100 1 5200 200
+scalar book 1 1 5100 100
+end
 case zero-level-snapshot
 K 1 1 0 100 0
 C 1 1

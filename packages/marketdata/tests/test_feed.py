@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from replay.book import Level, reconstruct_many
+from replay.book import Level, reconstruct, reconstruct_many
 from replay.feed import Feed, scale_price, scale_size
 
 
@@ -69,6 +69,22 @@ def test_live_books_equal_the_replayed_history():
         live.append(dict(feed.books["A"].levels))
     replayed = reconstruct_many(frames, deltas, range(5), [(0, None)])
     assert [b.levels for b in replayed] == live
+
+
+def test_a_change_stamped_with_its_snapshots_time_is_not_lost_in_replay():
+    """The snapshot holds the book before the change; the change must still reach later queries."""
+    feed, frames, deltas = Feed(), [], []
+    messages = [book(1000, [("0.47", "10")], [("0.51", "1")]), change(1000, ("BUY", "0.47", "0")),
+                change(1005, ("SELL", "0.52", "2"))]
+    for message in messages:
+        update = feed.apply(message)
+        frames += [(k.ts_ms, list(k.levels)) for k in update.keyframes]
+        deltas += [(d.ts_ms, d.side, d.tick, d.size_e2) for d in update.deltas]
+    live = feed.books["A"].levels
+    assert (0, 4700) not in live
+    assert [b.levels for b in reconstruct_many(frames, deltas, [1000, 1005], [(0, None)])] == [
+        {(1, 5100): 100}, live]
+    assert reconstruct(frames, deltas, 1005, [(0, None)]).levels == live
 
 
 @pytest.mark.parametrize("message", [

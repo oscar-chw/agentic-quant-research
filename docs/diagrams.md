@@ -268,7 +268,7 @@ flowchart TB
         CLI["tools/replay_cli.cpp<br/>batch and --scalar"]
         OUTC[("build/cpp-batch.json<br/>build/cpp-scalar.json")]
     end
-    GOLD[("tests/golden/<br/>246 recorded cases")]
+    GOLD[("tests/golden/<br/>247 recorded cases")]
     PAR{"python/parity.py<br/>byte for byte,<br/>no tolerance"}
 
     EVID -->|"pins both digests"| GEN

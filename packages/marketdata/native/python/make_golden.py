@@ -36,6 +36,10 @@ def fixed_cases(Level):
                         (5000, [Level(1, 9000, 999)])], \
         [(2900, 0, 4500, 999), (3100, 0, 4900, 999), (3200, 1, 5100, 200), (3200, 1, 5100, 0),
          (3200, 1, 5100, 300), (4000, 0, 4600, 999)], [(1000, 2000), (3000, None)], [3500, 3000, 2000, 5000]
+    # replay.feed's output for a snapshot at 1000 (bid 4700) and a change at 1000 deleting that bid:
+    # the delta is stamped with the snapshot's time, so the book it made is re-emitted as a keyframe.
+    yield "same-ms-change", [(1000, [Level(0, 4700, 1000), Level(1, 5100, 100)]), (1000, [Level(1, 5100, 100)])], \
+        [(1000, 0, 4700, 0), (1005, 1, 5200, 200)], [(0, None)], [1005, 1000]
     yield "zero-level-snapshot", [(1, [Level(0, 100, 0)])], [], [(1, 1)], [1]
 
 

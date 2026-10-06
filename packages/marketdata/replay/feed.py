@@ -13,7 +13,10 @@ book after it:
 * ``{"event_type": "price_change", "timestamp": "<ms>", "price_changes":
   [{"asset_id": A, "side": "BUY" | "SELL", "price": p, "size": s}, ...]}``
   carries the new aggregate size at each listed level (size 0 removes it). Each
-  entry becomes one delta, applied in the order listed.
+  entry becomes one delta, applied in the order listed. ``replay.book`` skips a
+  delta stamped with its keyframe's own time as already included, so a change
+  stamped with the time of its asset's latest snapshot, which arrived after it,
+  is also recorded as a fresh keyframe of the book it produced.
 
 Prices and sizes are decimal strings converted exactly onto the integer grids
 of ``replay.book``; a value off the grid is refused, never rounded.
@@ -88,6 +91,7 @@ class Feed:
 
     def __init__(self):
         self.books: dict[str, Book] = {}
+        self._snapshot_ts: dict[str, int] = {}
 
     def apply(self, message) -> Update:
         if not isinstance(message, dict):
@@ -116,13 +120,14 @@ class Feed:
         if previous is not None and previous.levels != levels:
             update.disagreed.append(asset)
         self.books[asset] = Book(levels)
+        self._snapshot_ts[asset] = ts
         return update
 
     def _changes(self, message):
         ts, entries = _timestamp(message), message.get("price_changes")
         if not isinstance(entries, list):
             raise ValueError("a price_change message needs a price_changes list")
-        update = Update()
+        update, same_ms = Update(), {}
         for entry in entries:
             asset, side = entry.get("asset_id"), SIDES.get(entry.get("side"))
             if not isinstance(asset, str) or side is None:
@@ -130,4 +135,9 @@ class Feed:
             delta = Delta(asset, ts, side, scale_price(entry["price"]), scale_size(entry["size"]))
             self.books.setdefault(asset, Book()).apply(delta.side, delta.tick, delta.size_e2)
             update.deltas.append(delta)
+            if self._snapshot_ts.get(asset) == ts:
+                same_ms[asset] = None
+        for asset in same_ms:
+            levels = self.books[asset].levels
+            update.keyframes.append(Keyframe(asset, ts, tuple(Level(s, t, z) for (s, t), z in sorted(levels.items()))))
         return update

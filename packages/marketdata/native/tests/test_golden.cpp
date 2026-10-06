@@ -55,8 +55,8 @@ TEST_CASE("golden: C++ matches every outcome recorded from the Python reference"
     CHECK(in.good());
     const auto cases = load_cases(in);
     // Absence policy: a missing or truncated golden file must fail, not pass
-    // with nothing compared. 246 cases are recorded (6 fixed + 240 random).
-    CHECK_EQ(cases.size(), std::size_t{246});
+    // with nothing compared. 247 cases are recorded (7 fixed + 240 random).
+    CHECK_EQ(cases.size(), std::size_t{247});
 
     std::size_t compared_books = 0;
     for (const Case& c : cases) {
