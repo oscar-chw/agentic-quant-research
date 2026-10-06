@@ -491,7 +491,11 @@ def live_limits(live_fair: dict, walkforward: Path = ROOT / "research" / "walkfo
     quantile scales by live vol_mult / walk-forward vol_mult (different half-lives raise). With micro=True the microstructure gates are added, each at the walk-forward micro quantile of
     the same measure in the live engine's own recorded feature rows (live measures come from the real book and
     live bar sizes, so historic thresholds do not transfer), using only windows that start after the stale-book
-    fix (pmlab.performance.LIVE_VALID_FROM) and before the confirmation data (pmlab.evaluation.CONFIRM_START)."""
+    fix (pmlab.performance.LIVE_VALID_FROM) and before the confirmation data (pmlab.evaluation.CONFIRM_START).
+    The published tree has no pmlab.performance (so no LIVE_VALID_FROM), hence micro=True raises NotImplementedError."""
+    if micro:                                        # fail before reading anything, not with ModuleNotFoundError halfway in
+        raise NotImplementedError("live_limits(micro=True) needs pmlab.performance.LIVE_VALID_FROM, which is not in "
+                                  "this published tree; use micro=False or the frozen live_managed_micro policy")
     out = json.loads(walkforward.read_text())
     limits = RiskLimits(**out["risk"]["limits_by_day"][out["test_days"][-1]])
     wf = out["fair_params"]
@@ -503,14 +507,4 @@ def live_limits(live_fair: dict, walkforward: Path = ROOT / "research" / "walkfo
         k = live_fair["vol_mult"] / wf["vol_mult"]
         scale = lambda x: None if x is None else max(x * k, live_fair["sigma_floor"])
         limits = replace(limits, sigma_lo=scale(limits.sigma_lo), sigma_hi=scale(limits.sigma_hi))
-    if micro:
-        from pmlab.evaluation import CONFIRM_START
-        from pmlab.features import WindowFeatures
-        from pmlab.performance import LIVE_VALID_FROM
-        cols = ["ask", "bid", "depth_imb", *(c for _, c in MICRO.values())]
-        rows = live_feature_rows(live, cols, LIVE_VALID_FROM - LIVE_VALID_FROM % T + T, CONFIRM_START)
-        if rows.empty:
-            raise ValueError("no recorded live feature rows before the confirmation data")
-        pseudo = WindowFeatures(0, {c: rows[c].to_numpy(dtype=float) if c in rows else np.full(len(rows), np.nan) for c in cols}, None)
-        limits = resolve(replace(limits, micro_q=out["risk"]["micro_q"]), [pseudo])
     return limits
