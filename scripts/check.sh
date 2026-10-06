@@ -7,7 +7,8 @@ source scripts/env.sh
 out="$(mktemp -d)"
 trap 'rm -rf "$out"' EXIT
 echo "== tests"
-"$PY" -m pytest -p no:cacheprovider -rs --junitxml="$out/junit.xml" tests | tail -n 12
+# No output trimming: a failing run must name its failing tests and show why (a tail once hid them in CI).
+"$PY" -m pytest -p no:cacheprovider -rfEs --tb=short --disable-warnings --junitxml="$out/junit.xml" tests
 echo "== claims: every claim's tests, as run above, match docs/evidence.md"
 "$PY" scripts/claims.py --junit "$out/junit.xml" --check docs/evidence.md
 echo "== plan graph: statistics from plan/ match docs/evidence.md"
