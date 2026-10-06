@@ -102,7 +102,9 @@ def sfi(model, X, y, folds, w=None, scoring: str = "neg_log_loss", names=None) -
 
 def correlation_clusters(X, names, max_k: int | None = None) -> dict:
     """Clusters of features on the distance sqrt((1 - rho) / 2): average-linkage hierarchical clustering,
-    cut at the k (2..max_k) with the highest mean silhouette on the precomputed distances.
+    cut at the k (2..max_k) with the highest mean silhouette on the precomputed distances. When no k can be scored
+    (two features, max_k = 1, or perfectly correlated features) the silhouette is nan and two features are split
+    unless identical, anything else is one cluster.
 
     MLAM 2020 (section 4.4) uses ONC: k-means on the distance matrix, k by mean / sd of silhouettes,
     then recursive re-clustering of weak clusters. On the 8.6 synthetic set one ONC pass picks k = 2 and
@@ -128,6 +130,10 @@ def correlation_clusters(X, names, max_k: int | None = None) -> dict:
         q = silhouette_samples(dist, lab, metric="precomputed").mean()
         if q > best_q:
             best, best_q = lab, q
+    if best is None:                                 # no cut could be scored: 2 features, max_k=1, or one label at every cut
+        split = n == 2 and dist[0, 1] > 1e-6          # 2 features split unless identical; otherwise one cluster
+        best = np.array([1, 2]) if split else np.ones(n, dtype=int)
+        best_q = np.nan
     clusters = {}
     for j, lab in enumerate(best):
         clusters.setdefault(f"C{int(lab)}", []).append(j)

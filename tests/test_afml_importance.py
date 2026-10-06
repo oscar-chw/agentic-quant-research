@@ -69,6 +69,23 @@ def test_correlation_clusters_put_each_redundant_feature_with_its_source(data):
         assert where[r] == where[src]
 
 
+@pytest.mark.case
+def test_correlation_clusters_with_no_scorable_cut_still_returns_clusters():
+    """Two features leave range(2, max_k + 1) empty, and perfectly correlated features give one label at every cut; both
+    used to end in TypeError ('NoneType' object is not iterable) because no k was ever scored."""
+    rng = np.random.default_rng(0)
+    a = rng.normal(size=200)
+    two = fi.correlation_clusters(np.column_stack([a, rng.normal(size=200)]), ["a", "b"])
+    assert sorted(map(sorted, two["members"].values())) == [["a"], ["b"]]
+    same = fi.correlation_clusters(np.column_stack([a, a]), ["a", "b"])
+    assert list(same["members"].values()) == [["a", "b"]]
+    X = np.column_stack([a, a, 2 * a])
+    assert list(fi.correlation_clusters(X, ["a", "b", "c"])["members"].values()) == [["a", "b", "c"]]
+    capped = fi.correlation_clusters(np.column_stack([a, rng.normal(size=200), rng.normal(size=200)]), list("abc"), max_k=1)
+    assert list(capped["members"].values()) == [["a", "b", "c"]]
+    assert np.isnan(capped["silhouette"])
+
+
 @pytest.mark.eval
 def test_clustered_mda_credits_the_signal_clusters(data):
     """Threshold: the top cluster by clustered MDA contains an I feature, and every noise-only cluster
