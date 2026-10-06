@@ -6,8 +6,8 @@ This is the front page of Oscar's AI quant research system: a vault that keeps b
 cited, version-controlled notes, a harness whose gates decide when work is done, and AI coding agents that read,
 build and review. Its centrepiece is one complete build: over about four days in September 2026, a Claude Code
 orchestrator and its subagents turned López de Prado's *Advances in Financial Machine Learning* into 1,805
-paraphrased, cited claims and a tested Python library. The result in this repository: 1,400+ extracted claims
-verified by passing tests (758 tests, 0 failing). Across the whole project, the orchestrator and about 140 AI
+paraphrased, cited claims and a tested Python library. The result in this repository: 1,417 of 1,615 implemented claims
+verified by passing tests (773 tests, 0 failing). Across the whole project, the orchestrator and about 140 AI
 subagents (per private session logs) completed 266 gated tasks.
 
 How the parts connect (purple marks this repository; every other named repository is a separate component):
@@ -54,7 +54,7 @@ Each row is a separate repository; its role and numbers are taken from that repo
 
 | Component | Repo | Role in the system | Key evidence |
 |---|---|---|---|
-| Book-to-library build (centrepiece) | this repo | The vault's book and results notes, and the library built from them under the gate graph | 1,417 of 1,805 claims have every named test passing; 758 tests pass, 0 fail ([evidence](docs/evidence.md#a-claims)) |
+| Book-to-library build (centrepiece) | this repo | The vault's book and results notes, and the library built from them under the gate graph | 1,417 of 1,805 claims have every named test passing; 773 tests pass, 0 fail ([evidence](docs/evidence.md#a-claims)) |
 | Vault, paper layer | [quant-research-vault](https://github.com/oscar-chw/quant-research-vault) | arXiv and OpenAlex metadata into SQLite, indexed in ChromaDB, searched read-only over MCP; not used in this build | 5 offline tests pass; 18,492 paper rows in its local, unpublished database at a 2026-07-30 audit |
 | Research harness | [asof-research](https://github.com/oscar-chw/asof-research) | Point-in-time harness: an LLM proposes hypotheses but never scores them; a pre-registered gate, then a human or a pre-registered rule decides. Also holds the factor lab and an order-book replay package | REAL Binance data, 34 pairs: the gate blocked both control picks, which lost 6.9 and 7.4 bps/day out of sample; the LLM arm is pending until 2027-08-31 |
 | Agent harness | [agent-harness](https://github.com/oscar-chw/agent-harness) | The rules, memory, command guard and gated work graph, packaged as one install for AI coding tools | Held-out guard set: the v0.2 guard blocked 39 of 45 dangerous commands and allowed 20 of 20 safe ones; 836 tests pass (v0.3.2) |
@@ -118,7 +118,7 @@ hierarchical risk parity, structural breaks, entropy and microstructure features
 |---|---|---|
 | Claims written | 1,805 across 22 chapters: 1,615 done, 31 deferred, 159 not applicable | [evidence (a)](docs/evidence.md#a-claims) |
 | Claims whose every named test passes here | 1,417 of 1,805 (of the 1,615 done: 1,417 pass, 32 partly run, 34 reference only, 132 not in repo, 0 failing) | [evidence (a)](docs/evidence.md#a-claims) |
-| Tests in a fresh environment | 758 passed, 15 skipped (xgboost absent), 23 deselected (inputs not published), 0 failed | [evidence (a)](docs/evidence.md#a-claims) |
+| Tests in a fresh environment | 773 passed, 15 skipped (xgboost absent), 23 deselected (inputs not published), 0 failed | [evidence (a)](docs/evidence.md#a-claims) |
 | Second reading by a different agent | 165 of 276 headings fixed, 111 right as written | [claims README](docs/claims/README.md#the-second-reading) |
 | Gated work graph, whole project | 266 gated tasks done of 285 nodes; 13 of 399 gate runs failed and sent their node back (book plans: 72 of 73, 5 of 116) | [evidence (b)](docs/evidence.md#b-orchestration) |
 | Subagents, whole project | about 140 AI subagents (per private session logs); approximate, not reproducible here | [evidence (b)](docs/evidence.md#b-orchestration) |

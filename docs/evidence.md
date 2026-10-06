@@ -83,7 +83,7 @@ plan files and hardware page of the private repository, or are not applicable to
 "passing" here.
 
 **The test run.** `bash scripts/check.sh` in a fresh virtual environment built from `requirements.txt`
-(Python 3.11): 758 passed, 15 skipped, 23 deselected, 0 failed.
+(Python 3.11): 773 passed, 15 skipped, 23 deselected, 0 failed.
 
 ## (b) Orchestration
 
