@@ -17,7 +17,7 @@ book, and no formula is reproduced: a row names the equation, snippet or figure 
 | statement | what the book asks or warns, paraphrased |
 | where | the code that implements it, as `pmlab...` names |
 | evidence | the test that settles it, as `tests/<file>.py::<test>`, and sometimes a study report |
-| status | done (a named test), deferred (a reason and a date) or not applicable (a reason) |
+| status | done (a named test), deferred (a reason, and a date where one applies) or not applicable (a reason) |
 | note | how the test settles it, or why the claim does not apply to a 5-minute binary market on one machine |
 
 Counts by kind: logic 575, math 378, algo 248, structure 224, pitfall 217, constraint 163

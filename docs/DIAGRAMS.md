@@ -14,7 +14,7 @@ private, purple = the path the diagram is about.
 
 ## 1. System overview
 
-The three parts and the loop between them: the book goes into the vault as claims, the agents build from the claims under the harness, and what the gates and studies measure is written back. The paper layer was not queried in this build.
+The three parts and the loop between them: the book goes into the vault as claims, the agents build from the claims under the harness, the gate decides when a node is done, and what the tests and studies measure is written back next to the claims. The paper layer was not queried in this build.
 
 ```mermaid
 flowchart TB
@@ -37,11 +37,12 @@ flowchart TB
     BOOK -->|"read section by section"| AGENTS
     AGENTS ==>|"paraphrase, cite section"| CLAIMS
     CLAIMS ==>|"each claim names a test"| ORCH
-    ORCH ==>|"one node per brief"| AGENTS
+    ORCH ==>|"briefs nodes"| AGENTS
     AGENTS ==>|"code and tests"| LIB
     LIB ==>|"pytest"| GATE
     GATE -->|"non-zero: back to pending"| ORCH
-    GATE ==>|"exit 0: node done"| RESULTS
+    GATE ==>|"exit 0: node done"| ORCH
+    AGENTS -->|"record what was measured"| RESULTS
     RESULTS -.->|"written back"| CLAIMS
     PAPERS -.->|"not queried in this build"| ORCH
     classDef data fill:#dbeafe,stroke:#1d4ed8,color:#0b1220
@@ -102,7 +103,7 @@ Where in the code: `plan/*.md`, `scripts/plan_stats.py`, `docs/harness-rules.md`
 
 ## 4. One node, from goal to gate
 
-Oscar sets the goal; the orchestrator briefs one subagent per node, runs the gate itself, and sends the diff to a reviewer that did not write it.
+Oscar sets the goal; the orchestrator delegates nodes to subagents (and writes some code itself), runs the gate, and sends selected diffs to a reviewer that did not write them.
 
 ```mermaid
 sequenceDiagram
@@ -113,13 +114,13 @@ sequenceDiagram
     participant R as Reviewer subagent
     O->>C: goal and constraints
     C->>P: nodes with gates
-    C->>B: one node, its claims, its files
+    C->>B: a node, its claims, its files
     B->>B: code and its test
-    B-->>C: claims done
+    B-->>C: reports done
     C->>P: plan gate N runs pytest
     P-->>C: exit code, evidence appended
-    C->>R: review the diff it did not write
-    R-->>C: findings, each fixed with a test
+    C->>R: selected diffs it did not write
+    R-->>C: findings to fix
 ```
 
 Where in the code: private briefs and transcripts; their output is `src/pmlab/afml/`, `tests/` and the gate runs in `plan/*.md`.
@@ -134,7 +135,7 @@ timeline
     April 2026 : quant-research-vault, the paper layer
     July 2026 : Polymarket-Crypto-5min, an earlier separate experiment, not built from the book
     17 to 21 Sep 2026 : this build, AFML to a tested library under the gated harness
-    29 Sep 2026 : agent-harness, the harness practices packaged
+    Late Sep 2026 : agent-harness, the harness practices packaged
 ```
 
 Where in the code: links in [system.md](system.md).

@@ -21,6 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / "plan"
 NODE = re.compile(r"^- \[([ x>])\] (\d+)\. (.*)$")
 RUN = re.compile(r"^\s+(\d{4}-\d\d-\d\d)T\S+ exit (\d+) in \d+s$")
+# The plans whose goal is the book itself; the others built the data pipeline, the paper-trading engine, the dashboard,
+# the deployment and a platform rewrite. Kept separate so a book-build number is never a whole-project number.
+BOOK_PLANS = ("afml", "afml-pipeline", "book-v2", "bookfix-bars", "philosophy")
 BEGIN, END = "<!-- plan:begin (scripts/plan_stats.py --write) -->", "<!-- plan:end -->"
 
 
@@ -38,6 +41,13 @@ def load() -> list[dict]:
     return nodes
 
 
+def book_line(nodes: list[dict]) -> str:
+    ns = [n for n in nodes if n["plan"] in BOOK_PLANS]
+    rs = [c for n in ns for _, c in n["runs"]]
+    return (f"- Book plans only ({', '.join(BOOK_PLANS)}): {len(ns)} nodes, {sum(n['mark'] == 'x' for n in ns)} done; "
+            f"{len(rs)} gate runs, {sum(1 for c in rs if c)} failed.")
+
+
 def table(nodes: list[dict]) -> str:
     runs = [code for n in nodes for _, code in n["runs"]]
     days = sorted({d for n in nodes for d, _ in n["runs"]})
@@ -52,6 +62,7 @@ def table(nodes: list[dict]) -> str:
         f"{len(runs) - runs.count(0)}; nodes that failed a gate at least once: "
         f"{sum(any(c for _, c in n['runs']) for n in nodes)}.",
         f"- Gate runs dated {days[0]} to {days[-1]} (UTC)." if days else "- No gate runs recorded.",
+        book_line(nodes),
         "", "| plan | nodes | done | pending | gate runs | failed runs |", "|---|---|---|---|---|---|"]
     for plan in sorted({n["plan"] for n in nodes}):
         ns = [n for n in nodes if n["plan"] == plan]

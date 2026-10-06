@@ -1,10 +1,12 @@
 # How the system works
 
-Oscar's AI quant research system has three parts: a vault that acts as its second brain, a harness that decides when
-work counts as done, and AI coding agents that do the reading, building and reviewing. This page describes the one
-build that ran it from end to end: *Advances in Financial Machine Learning* (AFML) turned into a tested library in five
-days, 17 to 21 September 2026. The system was a set of local sessions and is no longer running; what remains is
-this record, the library and its tests.
+Oscar's AI quant research system has three parts: a vault, which Oscar designed as the system's second brain; a
+harness that decides when work counts as done; and AI coding agents that do the reading, building and reviewing.
+This page describes the one build that ran it from end to end: *Advances in Financial Machine Learning* (AFML) turned
+into a tested library in about four days, 17 to 21 September 2026 (UTC+8). The system was a set of local sessions,
+shut down on 30 September 2026 according to a private shutdown record; what remains is this record, the library and
+its tests. Claim notes and plan nodes that speak of an always-on engine or of a confirmation analysis on 2026-10-24
+were written while it ran, and that analysis will not take place.
 
 ## The vault: a second brain with three layers
 
@@ -14,8 +16,9 @@ this record, the library and its tests.
 | Papers | arXiv and OpenAlex papers, summarised and searchable | not queried: it is a separate pipeline built in April 2026 | [quant-research-vault](https://github.com/oscar-chw/quant-research-vault) |
 | Results | what a study measured, and whether the book held on this market | written back as notes on the claims they settle, and as study reports | claim notes; the reports stay private |
 
-The book layer is plain Markdown tables in git, not a note-taking app: an agent reads it with the same tools it
-uses for code, and a script checks it. The results layer is how measurement flows back. For example, claim I7.25
+"Vault" and "second brain" are Oscar's names for the design; the build's own files do not use them. In this build
+the book layer is plain Markdown tables in git, not a note-taking app: an agent reads it with the same tools it uses
+for code, and a script checks it. The results layer is how measurement flows back. For example, claim I7.25
 (sequential bootstrap) was implemented, measured on one day of about 3,000 label spans, found to raise sample
 uniqueness only from 0.205 to 0.212, and recorded as not applicable with those numbers
 ([claims/ch07.md](claims/ch07.md)).
@@ -73,11 +76,12 @@ if a node is marked done while one of its dependencies is open.
 
 ## The agents
 
-One Claude Code session orchestrated the build. It read the plan, wrote briefs, and sent work to subagents: builders,
-code reviewers and security auditors (approximate counts are on [the evidence page](evidence.md#b-orchestration)).
-Each subagent had one job; three of the task titles in the private session logs are "Adversarial audit AFML
-ch1/ch2/ch3", "Line review: AFML library (node 9)" and "Bet-sizing infrastructure by the book (node 12)". The gate run
-recorded under each node, not the subagent's report, is what marked it done.
+One Claude Code session orchestrated the work. It read the plan, wrote briefs, wrote some code itself, and sent
+work to subagents: builders, auditors, code reviewers and security auditors, some of which started subagents of their
+own (approximate counts, for the whole project, are on [the evidence page](evidence.md#b-orchestration)). Each
+subagent had one job; three task titles from the private session logs are "Adversarial audit AFML ch1", "Line review:
+AFML library (node 9)" and "Bet-sizing infrastructure by the book (node 12)". The gate run recorded under each node,
+not a subagent's report, is what marked it done.
 
 ```mermaid
 sequenceDiagram
@@ -88,13 +92,13 @@ sequenceDiagram
     participant R as Reviewer subagent
     O->>C: goal and constraints
     C->>P: nodes with gates
-    C->>B: one node, its claims, its files
+    C->>B: a node, its claims, its files
     B->>B: code and its test
-    B-->>C: claims done
+    B-->>C: reports done
     C->>P: plan gate N runs pytest
     P-->>C: exit code, evidence appended
-    C->>R: review the diff it did not write
-    R-->>C: findings, each fixed with a test
+    C->>R: selected diffs it did not write
+    R-->>C: findings to fix
 ```
 
 Where in the code: the briefs and transcripts are private; their results are `src/pmlab/afml/`, `tests/` and
@@ -112,7 +116,7 @@ timeline
     April 2026 : quant-research-vault, the paper layer
     July 2026 : Polymarket-Crypto-5min, an earlier separate experiment, not built from the book
     17 to 21 Sep 2026 : this build, AFML to a tested library under the gated harness
-    29 Sep 2026 : agent-harness, the harness practices packaged
+    Late Sep 2026 : agent-harness, the harness practices packaged
 ```
 
 [Polymarket-Crypto-5min](https://github.com/oscar-chw/Polymarket-Crypto-5min) is an earlier, separate experiment

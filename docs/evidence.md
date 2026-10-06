@@ -67,7 +67,8 @@ fall into four groups:
 1. **Test files not published**, because they import the live engine, the data recorder, the confirmation study or
    study scripts. Chapter 16 is the largest case: its HRP and strategy-lifecycle claims cite `test_lifecycle.py`, which
    imports the live performance module.
-2. **Deselected by name** in `tests/unpublished.txt`: 23 tests whose inputs are not published (a study script, a study
+2. **Deselected by name** in `tests/unpublished.txt`: 21 tests (23 cases, since two are parametrised) whose inputs are
+   not published (a study script, a study
    output, the recorded data cache or the heading index built from the book). `tests/conftest.py` fails the run if a
    line names a test that does not exist.
 3. **Skipped**: 15 meta-label tests need `xgboost`, which the original build also kept out of its main environment.
@@ -97,6 +98,7 @@ cat plan/*.md | grep -cE '^- \[x\]'                                     # done n
 - Done nodes with a recorded exit-0 gate run: 266.
 - Gate runs recorded: 399, of which exit 0: 386, non-zero (failed attempts): 13; nodes that failed a gate at least once: 12.
 - Gate runs dated 2026-09-16 to 2026-09-20 (UTC).
+- Book plans only (afml, afml-pipeline, book-v2, bookfix-bars, philosophy): 73 nodes, 72 done; 116 gate runs, 5 failed.
 
 | plan | nodes | done | pending | gate runs | failed runs |
 |---|---|---|---|---|---|
@@ -120,15 +122,17 @@ cat plan/*.md | grep -cE '^- \[x\]'                                     # done n
 | v2-architecture | 18 | 17 | 1 | 32 | 0 |
 <!-- plan:end -->
 
-The plans cover the whole private project, not only the AFML library. The book work is mainly `afml`, `afml-pipeline`,
-`book-v2`, `bookfix-bars`, `code-eval` and `philosophy`. The others built the market-data pipeline, the paper-trading
-engine, the dashboard and the deployment.
+The plans cover the whole private project, not only the AFML library. The "book plans" line counts the five plans whose
+goal is the book itself. The others built the market-data pipeline, the paper-trading engine, the dashboard, the
+deployment, a line-by-line code review and a platform rewrite.
 
 **Subagents: approximate, from private session logs.** The plan files do not record which agent ran a node. The
 counts below come from the orchestrating session's private logs, which are not published, so they cannot be
-reproduced from this repository: **about 140 subagent runs** (138 subagent transcripts: 107 general-purpose builders,
-26 code reviewers, 3 security auditors and 2 code-search agents). A plain text search of the session log returns
-about 220 matches, because each call is written to the log twice; 138 counts each call once.
+reproduced from this repository: **about 140 subagent runs across the whole project** (138 subagent transcripts: 107
+general-purpose agents that built, audited or re-read, 26 code reviewers, 3 security auditors and 2 code-search
+agents). The orchestrator started 111 of them and subagents started the other 27. By task title, 58 of the 138 are
+about the book; the 3 security audits were of the execution layer, which is not published. A plain text search of
+the orchestrator's log finds about 220 matches, because it records each of its 111 calls twice.
 
 **Commits, from the private repository's history.** 270 commits between 17 and 21 September 2026 (UTC+8), 269
 of them with a `Co-Authored-By: Claude` trailer. This repository's history is new; the original history stays private.
@@ -147,11 +151,11 @@ file is missing. It prints file names and run lengths only. Results on 6 October
 
 | book text | files checked | longest shared run | where |
 |---|---|---|---|
-| PDF text layer | 184 | 14 words: formula symbols in a code comment | `src/pmlab/afml/breaks.py` |
-| EPUB text | 184 | 12 words: a list of six station names | `docs/claims/ch01.md` |
+| PDF text layer | 192 | 14 words: formula symbols in a code comment | `src/pmlab/afml/breaks.py` |
+| EPUB text | 192 | 12 words: a list of names from one of the book's tables | `docs/claims/ch01.md` |
 
 Before publication the check also found three quoted sentences in test docstrings (15 to 21 words) and a run of
-figure captions. These were reworded, as were 11 claim statements that shared 12 to 14 words with the book.
+figure captions. These were reworded, as were 12 claim statements that shared 11 to 14 words with the book.
 AFML-specific equations are referred to by section ("the book's equation in this section") rather than spelled out.
 Formulas that are standard and published elsewhere, such as the Sharpe ratio, the deflated Sharpe ratio, Shannon
 entropy and the Roll and Kyle models, are described in words.

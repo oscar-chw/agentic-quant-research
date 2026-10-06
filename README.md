@@ -2,15 +2,15 @@
 
 [![ci](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/ci.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/ci.yml) [![lint](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/lint.yml/badge.svg)](https://github.com/oscar-chw/agentic-quant-research/actions/workflows/lint.yml)
 
-This is Oscar's AI quant research system, shown through its one complete build. In five days in September 2026, a
-Claude Code orchestrator and about 140 subagent tasks, held to a gated work graph, turned López de Prado's *Advances in
+This is Oscar's AI quant research system, shown through its one complete build. Over about four days in September
+2026, a Claude Code orchestrator and its subagents, held to a gated work graph, turned López de Prado's *Advances in
 Financial Machine Learning* into 1,805 paraphrased, cited claims and a tested Python library. In this repository,
 1,417 of those claims have every test they name passing, and 758 tests pass in a fresh environment; every other claim
 is listed with the reason it does not run here.
 
-The system has three parts: a vault that works as its second brain, a harness whose gates decide when work is done,
-and the agents. Book knowledge goes into the vault as claims, the agents build from it under the harness, and what
-the tests and studies measure is written back next to the claims:
+The system has three parts: a vault, which Oscar designed as the system's second brain; a harness whose gates decide
+when work is done; and the agents. Book knowledge goes into the vault as claims, the agents build from it under the
+harness, and what the tests and studies measure is written back next to the claims:
 
 ```mermaid
 flowchart TB
@@ -33,11 +33,12 @@ flowchart TB
     BOOK -->|"read section by section"| AGENTS
     AGENTS ==>|"paraphrase, cite section"| CLAIMS
     CLAIMS ==>|"each claim names a test"| ORCH
-    ORCH ==>|"one node per brief"| AGENTS
+    ORCH ==>|"briefs nodes"| AGENTS
     AGENTS ==>|"code and tests"| LIB
     LIB ==>|"pytest"| GATE
     GATE -->|"non-zero: back to pending"| ORCH
-    GATE ==>|"exit 0: node done"| RESULTS
+    GATE ==>|"exit 0: node done"| ORCH
+    AGENTS -->|"record what was measured"| RESULTS
     RESULTS -.->|"written back"| CLAIMS
     PAPERS -.->|"not queried in this build"| ORCH
     classDef data fill:#dbeafe,stroke:#1d4ed8,color:#0b1220
@@ -112,7 +113,7 @@ hierarchical risk parity, structural breaks, entropy and microstructure features
 | Done claims whose every named test passes here | 1,417 of 1,615; 32 partly run, 166 reference only, 0 failing | [evidence (a)](docs/evidence.md#a-claims) |
 | Tests in a fresh environment | 758 passed, 15 skipped (xgboost absent), 23 deselected (inputs not published), 0 failed | [evidence (a)](docs/evidence.md#a-claims) |
 | Second reading by a different agent | 165 of 276 headings fixed, 111 right as written | [claims README](docs/claims/README.md#the-second-reading) |
-| Gated work graph | 266 of 285 nodes done; 13 of 399 gate runs failed and sent their node back | [evidence (b)](docs/evidence.md#b-orchestration) |
+| Gated work graph, book plans | 72 of 73 nodes done; 5 of 116 gate runs failed and sent their node back (whole project: 266 of 285, 13 of 399) | [evidence (b)](docs/evidence.md#b-orchestration) |
 | Copy check against the book | longest shared run 14 words (formula symbols); limit 15 | [evidence](docs/evidence.md#copyright-the-copy-check) |
 | Leakage demo, SYNTHETIC | irrelevant feature: 0.73 accuracy under shuffled k-fold, 0.49 under purged k-fold | [scripts/demo.py](scripts/demo.py) |
 
@@ -125,7 +126,7 @@ python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
 bash scripts/demo.sh        # SYNTHETIC: leakage, selection bias, memory; ends with six "ok" lines (seconds)
 bash scripts/check.sh       # tests, claim ledger, plan statistics, demo; about 4 minutes
 .venv/bin/python scripts/claims.py        # 1,805 claims by status, and the second reading's tally
-.venv/bin/python scripts/plan_stats.py    # the plan graph: 285 gated nodes, 266 done
+.venv/bin/python scripts/plan_stats.py    # the plan graph: 285 gated nodes, 266 done (73 and 72 for the book)
 python3 scripts/copy_check.py --book <your copy of AFML>.txt   # the 16-word copy check
 ```
 
@@ -158,12 +159,13 @@ Docs: see [docs/README.md](docs/README.md).
 ## Limits
 
 - Not a running service. The live paper-trading engine, the dashboard and the execution layer stayed private, and the
-  system has been retired.
+  system was shut down on 30 September 2026. Claim notes and plan nodes that mention an always-on engine or a
+  confirmation analysis on 2026-10-24 were written while it ran; that analysis will not take place.
 - Built for one market, Polymarket's BTC 5-minute Up/Down tokens: some modules assume 300-second windows and binary
   payoffs held to expiry.
 - 198 of 1,615 done claims are not fully checked here, because their tests or inputs are private
   ([why](docs/evidence.md#a-claims)).
-- Subagent counts come from private session logs and are approximate; the plan statistics come from committed files.
+- Subagent counts come from private session logs, are approximate and cover the whole project, not only the book.
 - The claims were audited by agents, not by an outside expert in the book.
 - The paper layer of the vault was not used in this build.
 
@@ -175,8 +177,8 @@ Each lesson is a conclusion the build's own records state.
    one test would still pass with the boosting reweighting reversed ([audit/ch06](docs/claims/audit/ch06.md)).
 2. **Put a method's discipline into the machinery.** "Research before backtest" is a test that reads the plan graph
    ([test_afml_backtest_discipline.py](tests/test_afml_backtest_discipline.py)), so it cannot be skipped by accident.
-3. **An exit code beats a report.** 13 of 399 recorded gate runs failed and sent their node back to pending
-   ([evidence (b)](docs/evidence.md#b-orchestration)).
+3. **An exit code beats a report.** 13 of 399 recorded gate runs across the project (5 of 116 in the book plans)
+   failed and sent their node back to pending ([evidence (b)](docs/evidence.md#b-orchestration)).
 4. **A freeze is not a reason to leave a claim untested.** It forbids changing code, not testing it
    ([audit/ch03](docs/claims/audit/ch03.md)).
 5. **Record where the book does not pay, with the number.** The sequential bootstrap raised sample uniqueness only

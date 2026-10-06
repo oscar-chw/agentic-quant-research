@@ -1,7 +1,7 @@
 # The rules the build ran under
 
-The build repository's `CLAUDE.md`, which Claude Code loads into every session there, copied below the line with only
-its heading levels shifted. The
+The build repository's `CLAUDE.md`, which Claude Code loads into every session there, copied below the line with its
+heading levels shifted and its title annotated. The
 `plan` tool it names is not in this repository; [agent-harness](https://github.com/oscar-chw/agent-harness) is its later,
 packaged form. The sanitized graph the build left behind is in [`plan/`](../plan/).
 
