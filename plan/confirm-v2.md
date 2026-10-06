@@ -1,0 +1,24 @@
+# plan: confirm-v2 (sanitized copy)
+
+## goal: A fresh pre-registered confirmation (v2) starting 2026-09-19 00:00 UTC, with everything fixed, deployed and gated before it starts
+
+- [x] 1. Retire confirmation v1: move research/preregistration.json, preregistration_clarifications.md, confirm_dependence.json, confirm_dryrun.{json,md}, confirm_bars_*.json into research/confirmation_v1/ with SUPERSEDED.md (why, what was and was not looked at, commit ids) | ctx: research/, scripts/confirm.py | gate: test -s research/confirmation_v1/SUPERSEDED.md && test -s research/confirmation_v1/preregistration.json && test ! -e research/preregistration.json
+      2026-09-17T10:48:03Z exit 0 in 0s
+- [x] 2. Move the exploration cut: evaluation.CONFIRM_START = 2026-09-19 00:00 UTC; confirm.py ANALYSIS_AT = start + 7 d, PRIMARY_AT = start + 35 d; every date in code, docs and tests that meant the v1 start updated; the replay tool fixed for recordings older than a field (tape wallet) | needs: 1 | ctx: src/pmlab/evaluation.py, scripts/confirm.py, src/pmlab/live/session.py | gate: python -m pytest -p no:warnings -m 'not integration' tests
+      2026-09-17T11:02:44Z exit 0 in 265s
+- [x] 3. Replay every stored order book (2026-09-16 16:00 UTC → the last complete hour) through the fixed engine for all live strategies, bare and managed; report per strategy and variant (P&L, stake, return on stake, fills, vetoes by reason, shortfall) in research/replay.md | needs: 2 | ctx: scripts/replay_backtest.py | gate: python scripts/replay_backtest.py --check && test -s research/replay.json && test -s research/replay.md
+      2026-09-17T11:28:03Z exit 0 in 51s
+- [x] 4. Restart keeps paper positions, accounts and risk state (pm5m node 80; resting bids and pending orders are not restored: conservative, no fills); accounts and risk state start over at the account epoch = CONFIRM_START; deployed | needs: 2 | ctx: src/pmlab/live/engine.py, src/pmlab/live/warmstart.py | gate: python -m pytest tests/test_live_engine.py tests/test_warmstart.py -p no:warnings -m 'not integration'
+      2026-09-17T11:40:39Z exit 0 in 152s
+      2026-09-17T11:54:01Z exit 0 in 154s
+- [x] 5. Refit the pricing layer and P models on windows from 2026-09-02 to the fit time (dependence span left unseen), live params written, app restarted on them | needs: 2 | ctx: scripts/fit_live_models.py | gate: python scripts/fit_live_models.py --check
+      2026-09-17T11:12:32Z exit 0 in 1s
+- [x] 6. User approves the v2 registration design (S-live membership, spans, dates) with the replay in hand | needs: 3 | gate: grep -q '^APPROVED' plan/confirm-v2.md
+      2026-09-17T11:39:27Z exit 0 in 0s
+- [x] 7. Everything green before registering: full test suite, db --check, consistency_check, walkforward --check, trial_registry --check, alpha_bars --check, afml_extensions --check, bar_study --check; live app on the final code for ≥ 6 h with no task restarts, model errors or rejected-event spikes and memory flat | needs: 4,5,6 | ctx: data/live_app.log, data/memwatch.csv | gate: python scripts/preflight.py --check
+      2026-09-18T02:29:40Z exit 0 in 561s
+- [x] 8. (Waits for plan/code-eval.md node 14: the line-by-line review of the registered code, its fixes deployed and preflight green, user 2026-09-17 "make sure u also did eval every line of code".) Dependence fit, dry run on the 7 days before the start, registration written and committed before 2026-09-19 00:00 UTC | needs: 7 | ctx: scripts/confirm.py | gate: python scripts/confirm.py --check && python -c "import json; r=json.load(open('research/preregistration.json')); assert r['registered_at'] < r['confirm_start']" && git log --oneline -1 -- research/preregistration.json
+      2026-09-18T02:31:20Z exit 0 in 1s
+- [x] 9. Whole website updated to the new state (user, 2026-09-17: "make sure to update the whole website afterwards"): a confirmation panel with v2's start, analysis time (Taiwan and UTC), the registered legs and their selection rule, v1 retired with a link to its record; registered legs badged in the Strategies and Performance tabs, every other strategy marked exploratory; Research tab lists every current report (replay, confirmation v1 record, registration, audit R6, alpha_bars v2, AFML extensions, consistency check, walk-forward); every ⓘ and status text that described v1 (18 legs, bar rules, 2026-09-17/24) or the old fit updated; test_fidelity.md and docs/live_state.md current; a test fails if the dashboard's confirmation facts differ from scripts/confirm.py or if stale v1 facts remain | needs: 6 | ctx: src/pmlab/dashboard, research/test_fidelity.md, docs/live_state.md | gate: python -m pytest tests/test_dashboard.py tests/test_confirmation_panel.py -p no:warnings
+      2026-09-17T12:24:17Z exit 0 in 19s
+      2026-09-17T12:26:42Z exit 0 in 19s

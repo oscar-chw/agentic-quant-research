@@ -1,0 +1,22 @@
+# The whole gate (scripts/check.sh): every published test, the claim ledger and plan statistics against
+# docs/evidence.md, and the SYNTHETIC demo, in a fresh environment built from requirements.txt.
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install the pinned requirements into ./.venv
+        run: python -m venv .venv && .venv/bin/pip install -r requirements.txt
+      - name: Tests, claim ledger, plan statistics, demo
+        run: bash scripts/check.sh
