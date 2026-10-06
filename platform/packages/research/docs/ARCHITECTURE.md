@@ -17,7 +17,7 @@ flowchart TB
     VAL[Independent<br/>validation]
     DEC[Decision +<br/>evidence ceiling]
     REP[Report +<br/>claim ledger]
-    BRAIN[Knowledge / failures<br/>/ lessons]
+    KNOW[Knowledge / failures<br/>/ lessons]
     CODEX[Optional local<br/>Codex broker]
     RBUNDLE[Authenticated immutable<br/>draft bundle]
     WO -->|dataset, cutoff| ING
@@ -29,8 +29,8 @@ flowchart TB
     SNAP -->|recorded| CAT
     EXP -->|recorded| CAT
     VAL -->|recorded| CAT
-    DEC -->|knowledge record| BRAIN
-    REP -->|claims, lessons| BRAIN
+    DEC -->|knowledge record| KNOW
+    REP -->|claims, lessons| KNOW
     REP -. bounded draft task .-> CODEX
     CODEX -->|signed result| RBUNDLE
   end

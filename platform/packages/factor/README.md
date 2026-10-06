@@ -89,7 +89,7 @@ The separate reference checker imports no lab code: pairwise rank counts replace
 
 The optional bounded measurement script runs 10,000 and 100,000 synthetic panel rows through the direct evaluator route. It records exact bytes, feature-cell counts, runtime, process peak RSS and report hashes, then checks numerical values against the separate reference. Human reports show at most 40 test dates. The retained [measurements](docs/MEASUREMENTS.md) describe version 0.1.0's earlier direct route. Import is demonstrated on the useful small CSV, without repeating large benchmarks for a cell-count headline.
 
-See [architecture](docs/ARCHITECTURE.md) and [independent arithmetic](docs/INDEPENDENT_CALCULATIONS.md). It is standalone software written for this repository and contains no WorldQuant BRAIN code or results. No agent framework, paid model or live connection is required.
+See [architecture](docs/ARCHITECTURE.md) and [independent arithmetic](docs/INDEPENDENT_CALCULATIONS.md). It is standalone software written for this repository. No agent framework, paid model or live connection is required.
 
 ## Limits
 

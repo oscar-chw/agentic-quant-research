@@ -103,7 +103,7 @@ Ruff, Ruff formatting and Pyright come from the package's `dev` extra and are no
 
 ## Contribution context
 
-This repository was published with fresh history; earlier history is not public ([design history](../../docs/design-history.md#publication-history)). WorldQuant BRAIN work and competition projects are separate and not in this package.
+This repository was published with fresh history; earlier history is not public ([design history](../../docs/design-history.md#publication-history)). Competition projects are separate and not in this package.
 
 ## Limitations
 
