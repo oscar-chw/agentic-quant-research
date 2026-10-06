@@ -1,7 +1,9 @@
 """Replay binding, the OpenRouter transport (faked, never called) and the broker seam."""
 
+import http.server
 import io
 import json
+import threading
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -184,7 +186,7 @@ def test_openrouter_default_transport_reports_a_network_failure(monkeypatch):
         assert request.get_method() == "POST" and request.full_url == OPENROUTER_URL and timeout == 7
         raise llm.urllib.error.URLError("no route")
 
-    monkeypatch.setattr(llm.urllib.request, "urlopen", refuse)
+    monkeypatch.setattr(llm._OPENER, "open", refuse)
     provider = OpenRouterProvider(timeout=7)
     with pytest.raises(RuntimeError, match="request failed: .*no route"):
         provider.complete("k", b"p")
@@ -197,7 +199,7 @@ def test_openrouter_default_transport_returns_an_http_error_status(monkeypatch):
     def limited(request, timeout):
         raise llm.urllib.error.HTTPError(OPENROUTER_URL, 429, "Too Many Requests", {}, io.BytesIO(body))
 
-    monkeypatch.setattr(llm.urllib.request, "urlopen", limited)
+    monkeypatch.setattr(llm._OPENER, "open", limited)
     provider = OpenRouterProvider()
     with pytest.raises(RuntimeError, match="HTTP 429: Rate limit exceeded: free-models-per-day"):
         provider.complete("k", b"p")
@@ -251,3 +253,44 @@ def test_receipt_key_root_can_be_kept_out_of_the_user_profile(monkeypatch, tmp_p
     monkeypatch.undo()  # drop conftest's patch: exercise the real default lookup
     monkeypatch.setenv("QRAE_RECEIPT_KEY_ROOT", str(tmp_path / "keys"))
     assert codex_broker._default_receipt_key_root() == tmp_path / "keys"
+
+
+def test_openrouter_does_not_follow_a_redirect_or_forward_the_key():
+    """A 302 must neither reach the Location host nor carry the Bearer key there."""
+    seen = []
+
+    class Target(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            seen.append(("GET", self.headers.get("Authorization")))
+            self.send_response(200), self.end_headers(), self.wfile.write(completion())
+
+        do_POST = do_GET
+
+        def log_message(self, *args):
+            pass
+
+    target = http.server.HTTPServer(("127.0.0.1", 0), Target)
+
+    class Redirector(Target):
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"]))
+            self.send_response(302)
+            self.send_header("Location", f"http://127.0.0.1:{target.server_port}/stolen")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+    origin = http.server.HTTPServer(("127.0.0.1", 0), Redirector)
+    threads = [threading.Thread(target=server.serve_forever, daemon=True) for server in (origin, target)]
+    for thread in threads:
+        thread.start()
+    try:
+        url = f"http://127.0.0.1:{origin.server_port}/"
+        status, _ = llm._post(url, b"{}", {"Authorization": f"Bearer {KEY}"}, 5)
+    finally:
+        for server in (origin, target):
+            server.shutdown()
+            server.server_close()
+    assert status == 302
+    assert seen == []
+
+

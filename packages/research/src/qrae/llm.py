@@ -24,6 +24,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from .codex_broker import CODEX_OUTPUT_SCHEMA
+from .polymarket import _RejectRedirects
 
 REPLAY_SCHEMA = "qrae.llm-replay/v1"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -85,11 +86,15 @@ class MissingApiKey(RuntimeError):
     """OPENROUTER_API_KEY is unset or empty. A live run must fail here, never skip the arm silently."""
 
 
+# One opener, no redirect handler: urllib would re-send the Authorization header to the Location host.
+_OPENER = urllib.request.build_opener(_RejectRedirects())
+
+
 def _post(url: str, body: bytes, headers: dict, timeout: float) -> tuple[int, bytes]:
     """POST with the standard library; returns (status, body), an HTTP error's included."""
     request = urllib.request.Request(url, data=body, headers=headers, method="POST")
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with _OPENER.open(request, timeout=timeout) as response:
             return response.status, response.read(MAX_RESPONSE_BYTES + 1)
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read(MAX_RESPONSE_BYTES + 1)
