@@ -86,6 +86,15 @@ class MissingApiKey(RuntimeError):
     """OPENROUTER_API_KEY is unset or empty. A live run must fail here, never skip the arm silently."""
 
 
+class LiveCallFailed(RuntimeError):
+    """A live call produced no usable answer: transport failure, HTTP error, refused body or spent budget."""
+
+
+class LiveRunAborted(Exception):
+    """A live call failed inside the broker seam. Not a RuntimeError, so the broker's runner-failure
+    catch cannot turn it into a normal CRITIC_UNUSABLE run whose replay lacks the failed call."""
+
+
 # One opener, no redirect handler: urllib would re-send the Authorization header to the Location host.
 _OPENER = urllib.request.build_opener(_RejectRedirects())
 
@@ -146,6 +155,14 @@ class OpenRouterProvider:
                            "reasoning": REASONING}).encode("utf-8")
 
     def complete(self, key: str, prompt: bytes) -> str:
+        try:
+            return self._complete(key, prompt)
+        except LiveCallFailed:
+            raise
+        except RuntimeError as exc:
+            raise LiveCallFailed(str(exc)) from exc
+
+    def _complete(self, key: str, prompt: bytes) -> str:
         if self.max_calls is not None and self.calls >= self.max_calls:
             raise RuntimeError(f"live call budget of {self.max_calls} exhausted before {key!r}")
         self.calls += 1
@@ -240,7 +257,10 @@ def broker_runner(provider, key: str) -> Callable:
         # it in the prompt, or a real model has no way to know the exact shape.
         prompt = input + b"\n\nReturn one JSON object that validates against this JSON Schema:\n" \
             + json.dumps(CODEX_OUTPUT_SCHEMA, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        text = strip_fence(provider.complete(key, prompt))
+        try:
+            text = strip_fence(provider.complete(key, prompt))
+        except LiveCallFailed as exc:
+            raise LiveRunAborted(str(exc)) from exc
         return SimpleNamespace(returncode=0, stdout=text.encode("utf-8"), stderr=b"")
 
     return run

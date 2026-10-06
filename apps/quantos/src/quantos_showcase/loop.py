@@ -34,7 +34,7 @@ from factor_research.runs import run_trial, verify_run
 from note_index import NoteIndex
 from qrae import codex_broker
 from qrae.artifacts import canonical_json_bytes, sha256_bytes
-from qrae.llm import MissingApiKey, OpenRouterProvider, ReplayProvider, ReplayThenLive, broker_runner, prompt_sha256, strip_fence
+from qrae.llm import LiveRunAborted, MissingApiKey, OpenRouterProvider, ReplayProvider, ReplayThenLive, broker_runner, prompt_sha256, strip_fence
 from qrae.quote_features import strict_json
 from qrae.quote_workflow import checked_bundle, read_input, reserve
 from source_access import query_note_sources
@@ -788,7 +788,7 @@ def main(argv=None):
     except MissingApiKey as exc:  # its own exit code, so a script cannot mistake it for a refusal
         print(json.dumps({"status": "NO_API_KEY", "error": str(exc)}), file=sys.stderr)
         return 4
-    except (ValueError, OSError, LookupError, RuntimeError) as exc:
+    except (ValueError, OSError, LookupError, RuntimeError, LiveRunAborted) as exc:
         print(json.dumps({"status": "REFUSED", "error": str(exc)}), file=sys.stderr)
         return 2
 

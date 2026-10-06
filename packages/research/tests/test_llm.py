@@ -15,6 +15,7 @@ from qrae.llm import (
     OPENROUTER_MODEL,
     OPENROUTER_URL,
     MissingApiKey,
+    LiveRunAborted,
     OpenRouterProvider,
     ReplayMiss,
     ReplayProvider,
@@ -294,3 +295,7 @@ def test_openrouter_does_not_follow_a_redirect_or_forward_the_key():
     assert seen == []
 
 
+def test_a_failed_live_call_aborts_the_broker_seam_instead_of_becoming_a_quarantined_result(tmp_path):
+    provider = OpenRouterProvider(post=fake_post((429, b'{"error": {"message": "rate limited"}}')))
+    with pytest.raises(LiveRunAborted, match="HTTP 429"):
+        broker_runner(provider, "critic:k")([], input=b"ask")

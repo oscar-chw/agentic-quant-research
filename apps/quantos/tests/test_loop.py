@@ -8,7 +8,7 @@ from pathlib import Path
 import method_contract
 import pytest
 from factor_research.synthetic import make_fixture
-from qrae.llm import ReplayProvider
+from qrae.llm import LiveRunAborted, ReplayProvider
 
 from quantos_showcase import loop
 
@@ -125,6 +125,26 @@ def test_live_without_an_api_key_exits_4_and_records_nothing(tmp_path, monkeypat
     monkeypatch.setenv("OPENROUTER_API_KEY", "fake-key")
     built = loop.provider_for(loop.argparse.Namespace(live=True, model=None, max_calls=3, replay=None))
     assert (built.name, built.model, built.max_calls) == ("openrouter", "qwen/qwen3.8-27b:free", 3)
+
+
+def live_failure_setup(panels, tmp_path, monkeypatch):
+    """A replay holding every key except one critic call, so the live model is asked for it and answers 429."""
+    entries = [e for e in REPLAY["entries"] if e["key"] != "critic:control:H1"]
+    replay = tmp_path / "partial.json"
+    replay.write_text(json.dumps({**REPLAY, "entries": entries}))
+    monkeypatch.setenv("OPENROUTER_API_KEY", "fake-key")
+    real = loop.OpenRouterProvider
+    monkeypatch.setattr(loop, "OpenRouterProvider", lambda **kw: real(
+        post=lambda *a: (429, b'{"error": {"message": "rate limited"}}'), **kw))
+    return replay
+
+
+def test_a_rate_limited_live_critic_call_fails_the_run_and_leaves_no_run_behind(panels, tmp_path, monkeypatch):
+    replay = live_failure_setup(panels, tmp_path, monkeypatch)
+    provider = loop.provider_for(loop.argparse.Namespace(live=True, model=None, max_calls=3, replay=str(replay)))
+    with pytest.raises(LiveRunAborted, match="HTTP 429"):
+        run(panels, "control", provider)
+    assert not (panels / "store/control").exists()
 
 
 def test_a_v1_ledger_is_refused_by_name(panels):
