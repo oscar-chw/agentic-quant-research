@@ -766,16 +766,16 @@ def main(argv=None):
             if (args.record or args.model or args.max_calls is not None) and not args.live:
                 raise ValueError("--record, --model and --max-calls need --live")
             provider = provider_for(args)
-            try:
-                if args.command == "propose":
-                    result = propose_only(args.campaign, args.experiment, args.vault, provider)
-                else:
-                    ledger = run_loop(args.campaign, args.prices, args.contract, args.vault, args.store,
-                                      args.run_id, provider, receipt_keys=args.receipt_keys)
-                    result = {"run": str(Path(args.store) / args.run_id), "counts": ledger["counts"]}
-            finally:
-                if args.record:
-                    provider.save(args.record)
+            if args.command == "propose":
+                result = propose_only(args.campaign, args.experiment, args.vault, provider)
+            else:
+                ledger = run_loop(args.campaign, args.prices, args.contract, args.vault, args.store,
+                                  args.run_id, provider, receipt_keys=args.receipt_keys)
+                result = {"run": str(Path(args.store) / args.run_id), "counts": ledger["counts"]}
+            # Only a session that finished is written: a failed one labelled "REAL LLM OUTPUT"
+            # would be refused as already recorded on the rerun and then committed as is.
+            if args.record:
+                provider.save(args.record)
         elif args.command == "gate":
             interactive = not (args.promote or args.reject) and sys.stdin.isatty()
             result = gate(args.run, args.promote, args.reject, ask=ask_terminal if interactive else None)

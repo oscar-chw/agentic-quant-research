@@ -147,6 +147,17 @@ def test_a_rate_limited_live_critic_call_fails_the_run_and_leaves_no_run_behind(
     assert not (panels / "store/control").exists()
 
 
+def test_a_failed_live_session_exits_nonzero_and_writes_no_replay(panels, tmp_path, monkeypatch, capsys):
+    replay = live_failure_setup(panels, tmp_path, monkeypatch)
+    record = tmp_path / "session.json"
+    code = loop.main(["run", "--campaign", str(EXAMPLES / "campaign.json"), "--prices", str(panels / "control/panel.csv"),
+                      "--contract", str(EXAMPLES / "synthetic-contract.json"), "--vault", str(EXAMPLES / "vault"),
+                      "--store", str(panels / "store"), "--run-id", "control", "--receipt-keys", str(panels / "keys"),
+                      "--replay", str(replay), "--live", "--max-calls", "3", "--record", str(record)])
+    assert code == 2 and "HTTP 429" in capsys.readouterr().err
+    assert not record.exists()
+
+
 def test_a_v1_ledger_is_refused_by_name(panels):
     run(panels, "control", ReplayProvider(EXAMPLES / "replay.hand-written.json"))
     path = panels / "store/control/ledger.json"
