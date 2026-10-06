@@ -1,0 +1,233 @@
+{
+ "arms": {
+  "grid": {
+   "deflated_sharpe": {
+    "applied_to": "the validation daily rank-IC series, not returns",
+    "by_spec": {
+     "distinct_variance_n_all": 0.8973464744400322,
+     "distinct_variance_n_distinct": 0.909214787477172,
+     "distinct_variance_n_effective": 0.9665328502579473,
+     "signed_variance_n_all": 0.03230263931341815,
+     "signed_variance_n_distinct": 0.0694431071412498,
+     "signed_variance_n_effective": 0.8755083471931658
+    },
+    "distinct_lookbacks": 60,
+    "effective_trials": 2.1034599149602102,
+    "headline": 0.9665328502579473,
+    "headline_threshold": 0.008330493645906868,
+    "range": [
+     0.03230263931341815,
+     0.9665328502579473
+    ]
+   },
+   "if_selected_on_validation_net": {
+    "promoted_by_v1_gate": false,
+    "selected": "momentum-14",
+    "test_ic_mean": -0.0038979499836253404,
+    "test_net_mean": -1.4801279686921817e-05,
+    "validation_net_mean": 0.000768821540626488
+   },
+   "selected": "reversal-40",
+   "test_ic": {
+    "autocorrelation": {
+     "1": 0.0020361155835018317,
+     "10": 0.02215293226184801,
+     "2": -0.11491079365837169,
+     "5": 0.043746197463781306
+    },
+    "ic_mean": -0.002303833549661971,
+    "t": -0.20070753281412698,
+    "t_newey_west_lag20": -0.21572168848059056,
+    "t_newey_west_lag5": -0.20867705471822345
+   },
+   "validation_ic": {
+    "autocorrelation": {
+     "1": -0.07992943652242616,
+     "10": -0.03598815266083964,
+     "2": 0.009983642438023054,
+     "5": 0.00243926545528064
+    },
+    "ic_mean": 0.02972051004036768,
+    "t": 2.0075544908155036,
+    "t_newey_west_lag20": 2.1392648254743483,
+    "t_newey_west_lag5": 2.126687840251866
+   }
+  },
+  "random-K": {
+   "deflated_sharpe": {
+    "applied_to": "the validation daily rank-IC series, not returns",
+    "by_spec": {
+     "distinct_variance_n_all": 0.8675277390282748,
+     "distinct_variance_n_distinct": 0.8787168706914964,
+     "distinct_variance_n_effective": 0.9128734496285811,
+     "signed_variance_n_all": 0.3320958224046966,
+     "signed_variance_n_distinct": 0.4161881981332059,
+     "signed_variance_n_effective": 0.7170483816852468
+    },
+    "distinct_lookbacks": 6,
+    "effective_trials": 2.584510928756331,
+    "headline": 0.9128734496285811,
+    "headline_threshold": 0.013254905973706523,
+    "range": [
+     0.3320958224046966,
+     0.9128734496285811
+    ]
+   },
+   "if_selected_on_validation_net": {
+    "promoted_by_v1_gate": false,
+    "selected": "momentum-19",
+    "test_ic_mean": -0.005770531456656254,
+    "test_net_mean": -5.1276028292595244e-05,
+    "validation_net_mean": 0.000702798111860198
+   },
+   "selected": "reversal-48",
+   "test_ic": {
+    "autocorrelation": {
+     "1": 0.01186379960966546,
+     "10": 0.028389316580480446,
+     "2": -0.10560363355002206,
+     "5": 0.05391370580901194
+    },
+    "ic_mean": -0.003036826683011592,
+    "t": -0.262651641849073,
+    "t_newey_west_lag20": -0.2605379513427205,
+    "t_newey_west_lag5": -0.2697340478794262
+   },
+   "validation_ic": {
+    "autocorrelation": {
+     "1": -0.04630409816503325,
+     "10": 0.005636892193255929,
+     "2": -0.00048094381252411186,
+     "5": -0.012075295746252079
+    },
+    "ic_mean": 0.024785469432867812,
+    "t": 1.627628936478832,
+    "t_newey_west_lag20": 1.6642056616031382,
+    "t_newey_west_lag5": 1.7191247405738301
+   }
+  }
+ },
+ "label": "POST-HOC: computed after the v1 results and their review; not pre-registered",
+ "llm_arm_v1_outcome_range": {
+  "k": 8,
+  "note": "Under v1 the LLM selection also had to pass the loop's card rule and critic; no card passes the card rule, so v1 could never promote it. Protocol v2 removes that asymmetry.",
+  "promotable": [
+   "momentum-23",
+   "momentum-24",
+   "momentum-25",
+   "momentum-26",
+   "momentum-27",
+   "momentum-28",
+   "momentum-33",
+   "momentum-34",
+   "momentum-35",
+   "momentum-36",
+   "momentum-37",
+   "momentum-38",
+   "momentum-39",
+   "momentum-43",
+   "momentum-44",
+   "momentum-45",
+   "momentum-46",
+   "momentum-47",
+   "momentum-48",
+   "momentum-49",
+   "momentum-50",
+   "momentum-51",
+   "momentum-53",
+   "momentum-54",
+   "momentum-55",
+   "momentum-56",
+   "momentum-57",
+   "momentum-58",
+   "momentum-59",
+   "momentum-60"
+  ],
+  "selectable": 113,
+  "test_ic_mean": [
+   -0.016193098043497726,
+   0.016193098043497726
+  ],
+  "test_net_mean": [
+   -0.0015322307271720401,
+   0.00037871730415671114
+  ]
+ },
+ "loop_card_rule_passes": {
+  "rule": "mean rank IC >= 1/100 and net > 0 (the campaign rule), counted per split",
+  "test_sleeve_net": 0,
+  "validation_rebalanced_net": 0,
+  "validation_sleeve_net": 0
+ },
+ "newey_west": "Bartlett kernel; lag 5 and lag 20",
+ "positive_net": {
+  "test": [
+   "momentum-20",
+   "momentum-23",
+   "momentum-24",
+   "momentum-25",
+   "momentum-26",
+   "momentum-27",
+   "momentum-28",
+   "momentum-29",
+   "momentum-30",
+   "momentum-31",
+   "momentum-32",
+   "momentum-33",
+   "momentum-34",
+   "momentum-35",
+   "momentum-36",
+   "momentum-37",
+   "momentum-38",
+   "momentum-39",
+   "momentum-40",
+   "momentum-41",
+   "momentum-42",
+   "momentum-43",
+   "momentum-44",
+   "momentum-45",
+   "momentum-46",
+   "momentum-47",
+   "momentum-48",
+   "momentum-49",
+   "momentum-50",
+   "momentum-51",
+   "momentum-52",
+   "momentum-53",
+   "momentum-54",
+   "momentum-55",
+   "momentum-56",
+   "momentum-57",
+   "momentum-58",
+   "momentum-59",
+   "momentum-60"
+  ],
+  "test_sleeve": [],
+  "validation_and_test": [
+   "momentum-20",
+   "momentum-23",
+   "momentum-24",
+   "momentum-25",
+   "momentum-26",
+   "momentum-27",
+   "momentum-28",
+   "momentum-29",
+   "momentum-30",
+   "momentum-31",
+   "momentum-32",
+   "momentum-33",
+   "momentum-34",
+   "momentum-35",
+   "momentum-36",
+   "momentum-37",
+   "momentum-39"
+  ],
+  "validation_sleeve": []
+ },
+ "sign_disagreement": {
+  "correlation_validation_ic_vs_net": 0.4134604547338277,
+  "momentum_lookbacks": 60,
+  "validation_ic_and_net_opposite_sign": 36,
+  "validation_ic_negative_net_positive": 36
+ }
+}

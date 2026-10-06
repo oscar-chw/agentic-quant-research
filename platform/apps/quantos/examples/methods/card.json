@@ -1,0 +1,35 @@
+{
+  "schema": "vault-method/v1",
+  "id": "weighted-midpoint-example",
+  "method": "quote-weighted-midpoint/v1",
+  "hypothesis": "The fixed weighted midpoint has lower next-decision midpoint MAE than the current midpoint.",
+  "mechanism": "Displayed bid/ask size imbalance shifts the forecast toward the less supplied side; predictive content remains an empirical hypothesis.",
+  "assumptions": [
+    "Quote availability and continuity follow the supplied archive contract.",
+    "Both forecasts use identical eligible pairs and a fixed decision grid."
+  ],
+  "limitations": [
+    "Previously inspected synthetic fixture; no untouched holdout or external preregistration.",
+    "One-pair minimum is a software example, not a market research acceptance threshold.",
+    "No fitted microprice, fills, fees or profitability evaluation."
+  ],
+  "sources": [
+    {
+      "id": "local-weighted-midpoint",
+      "kind": "local_derivation",
+      "path": "derivation.md",
+      "sha256": "0e77e39b708f4c6c774dc17aa4e661a0d4832a497844a9b0a1a9a7c3c92ecb5c",
+      "relationship": "derivation",
+      "use_scope": "local_review"
+    }
+  ],
+  "decision": {
+    "split": "validation",
+    "metric": "mae_ticks",
+    "candidate": "weighted_midpoint",
+    "baseline": "midpoint",
+    "min_pairs": 1,
+    "min_coverage": "1/3",
+    "min_improvement_ticks": "0"
+  }
+}

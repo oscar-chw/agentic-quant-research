@@ -1,0 +1,15 @@
+.venv
+.ci/
+work/
+runs/
+*-output/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.env*
+data/
+packages/marketdata/native/build/
+.ruff_cache/

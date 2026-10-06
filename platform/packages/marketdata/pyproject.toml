@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quant-marketdata"
+version = "0.5.0"
+description = "Point-in-time order-book replay from keyframes and deltas, and archived-feed admission"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+packages = ["replay"]
+
+[tool.ruff]
+target-version = "py311"

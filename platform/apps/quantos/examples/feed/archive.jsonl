@@ -1,0 +1,12 @@
+{"clock_evidence":"PROVIDED_CLOCKS_UNAUDITED","data_kind":"synthetic","instrument":"DEMO","schema":"quant-feed-archive/v1"}
+{"available_ms":0,"kind":"message","message":{"asks":[{"price":"0.51","size":"1"}],"asset_id":"DEMO","bids":[{"price":"0.49","size":"3"}],"event_type":"book","timestamp":"0"},"received_ms":0,"record_id":0}
+{"available_ms":15,"kind":"message","message":{"event_type":"price_change","price_changes":[{"asset_id":"DEMO","price":"0.49","side":"BUY","size":"1"}],"timestamp":"10"},"received_ms":12,"record_id":1}
+{"available_ms":21,"kind":"gap","reason":"disconnect","received_ms":21,"record_id":2}
+{"available_ms":22,"kind":"message","message":{"event_type":"price_change","price_changes":[{"asset_id":"DEMO","price":"0.49","side":"BUY","size":"9"}],"timestamp":"22"},"received_ms":22,"record_id":3}
+{"available_ms":25,"kind":"message","message":{"asks":[{"price":"0.51","size":"1"}],"asset_id":"DEMO","bids":[{"price":"0.49","size":"3"}],"event_type":"book","timestamp":"25"},"received_ms":25,"record_id":4}
+{"available_ms":35,"kind":"message","message":{"event_type":"price_change","price_changes":[{"asset_id":"DEMO","price":"0.51","side":"SELL","size":"0"}],"timestamp":"30"},"received_ms":32,"record_id":5}
+{"available_ms":40,"kind":"message","message":{"event_type":"price_change","price_changes":[{"asset_id":"DEMO","price":"0.52","side":"SELL","size":"1"}],"timestamp":"40"},"received_ms":40,"record_id":6}
+{"available_ms":45,"kind":"message","message":{"event_type":"price_change","price_changes":[{"asset_id":"DEMO","price":"0.49","side":"BUY","size":"99"}],"timestamp":"29"},"received_ms":45,"record_id":7}
+{"available_ms":50,"kind":"message","message":{"asks":[{"price":"0.52","size":"1"}],"asset_id":"DEMO","bids":[{"price":"0.50","size":"3"}],"event_type":"book","timestamp":"50"},"received_ms":50,"record_id":8}
+{"available_ms":70,"kind":"message","message":{"asks":[{"price":"0.53","size":"1"}],"asset_id":"DEMO","bids":[{"price":"0.51","size":"3"}],"event_type":"book","timestamp":"70"},"received_ms":70,"record_id":9}
+{"available_ms":95,"kind":"gap","reason":"archive_end","received_ms":95,"record_id":10}

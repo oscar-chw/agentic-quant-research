@@ -1,0 +1,239 @@
+{
+  "history_note": "History, kept unchanged apart from this field. Measured against the Python reference this package shipped on 2026-10-03, which was replaced on 2026-10-04 by replay.book (packages/marketdata/replay). Current figures, same workload and method: bench/results-2026-10-04.json.",
+  "schema": "replay-native-benchmark/v1",
+  "date": "2026-10-03",
+  "synthetic": true,
+  "workload": {
+    "messages": 100000,
+    "seed": 240914,
+    "queries": 64,
+    "delta_rows": 399600,
+    "output_levels": 128,
+    "source": "python/export_workload.py (the generator behind docs/evidence/replay-benchmark.json)"
+  },
+  "scope": "per repetition: API validation/preparation + replay + 64 independent books + all sorted output levels; workload loading and answer checking excluded for every implementation",
+  "every_repetition_checked_against_reference_output": true,
+  "processes_per_implementation": 5,
+  "repetitions_per_process": 5,
+  "aggregation": "median of per-process medians",
+  "machine": {
+    "cpu": "Apple M2 Max",
+    "os": "macOS-26.4.1-arm64-arm-64bit",
+    "arch": "arm64",
+    "python": "3.11.15 (main, Mar  3 2026, 00:52:57) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+    "cxxflags": "-std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror"
+  },
+  "commands": {
+    "python-scalar": "python3.11 bench/py_bench.py --ref <ref> --mode scalar",
+    "python-batch": "python3.11 bench/py_bench.py --ref <ref> --mode batch",
+    "cpp-batch": "build/replay_bench --mode batch",
+    "cpp-scalar": "build/replay_bench --mode scalar"
+  },
+  "summary": {
+    "python-scalar": {
+      "median_of_process_medians_seconds": 0.853639042,
+      "process_medians_seconds": [
+        0.837668958,
+        0.847363083,
+        0.853639042,
+        0.855120292,
+        0.856818083
+      ],
+      "min_seconds": 0.832941917,
+      "max_seconds": 0.914171167
+    },
+    "python-batch": {
+      "median_of_process_medians_seconds": 0.047641583,
+      "process_medians_seconds": [
+        0.0464585,
+        0.046215333,
+        0.048340208,
+        0.04874025,
+        0.047641583
+      ],
+      "min_seconds": 0.045826292,
+      "max_seconds": 0.050706
+    },
+    "cpp-batch": {
+      "median_of_process_medians_seconds": 0.000793792,
+      "process_medians_seconds": [
+        0.000824334,
+        0.0007595,
+        0.000793792,
+        0.000820667,
+        0.000793583
+      ],
+      "min_seconds": 0.000742584,
+      "max_seconds": 0.001191292
+    },
+    "cpp-scalar": {
+      "median_of_process_medians_seconds": 0.01168625,
+      "process_medians_seconds": [
+        0.011083,
+        0.010903375,
+        0.01168625,
+        0.011711666,
+        0.011818208
+      ],
+      "min_seconds": 0.010876375,
+      "max_seconds": 0.012241041
+    }
+  },
+  "ratios": {
+    "python_scalar_over_cpp_batch": 1075.3938588446345,
+    "python_batch_over_cpp_batch": 60.01771622792873,
+    "python_scalar_over_python_batch": 17.917940342158655,
+    "cpp_scalar_over_cpp_batch": 14.722055651858422
+  },
+  "raw_nanoseconds": {
+    "python-scalar": [
+      [
+        857270416,
+        837653459,
+        832941917,
+        837963625,
+        837668958
+      ],
+      [
+        850294250,
+        844607250,
+        844282875,
+        847363083,
+        863762000
+      ],
+      [
+        862720709,
+        858223667,
+        853639042,
+        852373375,
+        852112208
+      ],
+      [
+        860360083,
+        855120292,
+        866990041,
+        854044625,
+        849750875
+      ],
+      [
+        876790250,
+        914171167,
+        854875708,
+        856818083,
+        855025458
+      ]
+    ],
+    "python-batch": [
+      [
+        48431333,
+        46628417,
+        45826292,
+        46438167,
+        46458500
+      ],
+      [
+        48995583,
+        46215333,
+        46832250,
+        46102708,
+        45834417
+      ],
+      [
+        49971416,
+        48130791,
+        49242291,
+        48237708,
+        48340208
+      ],
+      [
+        48792125,
+        48876042,
+        47891167,
+        48740250,
+        48684834
+      ],
+      [
+        50706000,
+        48422458,
+        47641583,
+        47531042,
+        47458833
+      ]
+    ],
+    "cpp-batch": [
+      [
+        1191292,
+        795750,
+        799208,
+        887959,
+        824334
+      ],
+      [
+        830625,
+        751000,
+        759500,
+        742584,
+        852834
+      ],
+      [
+        901042,
+        793792,
+        788250,
+        776209,
+        854667
+      ],
+      [
+        887500,
+        820667,
+        802583,
+        815875,
+        860375
+      ],
+      [
+        901542,
+        803125,
+        793583,
+        792584,
+        774083
+      ]
+    ],
+    "cpp-scalar": [
+      [
+        11083000,
+        10964250,
+        11223375,
+        10987625,
+        11627000
+      ],
+      [
+        10897834,
+        10964042,
+        10903375,
+        11815416,
+        10876375
+      ],
+      [
+        11833375,
+        11806250,
+        11416666,
+        11617417,
+        11686250
+      ],
+      [
+        11711666,
+        11829875,
+        11682000,
+        12179042,
+        11536375
+      ],
+      [
+        12241041,
+        11818208,
+        12090500,
+        11126208,
+        11098417
+      ]
+    ]
+  }
+}

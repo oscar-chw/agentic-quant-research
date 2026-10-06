@@ -1,0 +1,12 @@
+{
+  "schema": "quote-spec/v1",
+  "instrument": "synthetic-quote-A",
+  "data_kind": "synthetic",
+  "price_tick": "0.0001",
+  "start_ms": 1704067200000,
+  "step_ms": 60000,
+  "count": 80,
+  "max_age_ms": 60000,
+  "train_count": 30,
+  "validation_count": 25
+}

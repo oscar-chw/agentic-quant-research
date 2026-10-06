@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "work_order_id": "synthetic-price-baseline",
+  "kind": "PRICE_BASELINE",
+  "market_family": "cross-market-synthetic",
+  "created_at": "2026-07-01T00:00:00Z",
+  "expires_at": "2099-01-01T00:00:00Z",
+  "cutoff": "2024-02-14T00:00:00Z",
+  "dataset": {
+    "path": "examples/price_baseline/prices.csv",
+    "sha256": "cbc7b1a5ec4a1b3eceb1cd253a0a7e9216cb8acf32082b900ff161809fbb946c",
+    "format": "csv"
+  },
+  "hypothesis": {
+    "mechanism": "Delayed price adjustment can create short-lived directional persistence.",
+    "prediction": "A lagged positive return predicts a positive next-observation return, and vice versa.",
+    "horizon": "one observation",
+    "falsifier": "The after-cost locked chronological test return is non-positive."
+  },
+  "experiment": {
+    "train_fraction": 0.6,
+    "validation_fraction": 0.2,
+    "min_test_observations": 5
+  },
+  "strategy": {
+    "kind": "lagged_momentum",
+    "lookback": 3,
+    "cost_bps": 5.0
+  },
+  "evidence_ceiling": "E0",
+  "allow_live_trading": false
+}

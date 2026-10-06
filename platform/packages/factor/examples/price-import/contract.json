@@ -1,0 +1,17 @@
+{
+  "schema_version": "factor-price-import/v1",
+  "columns": {"time": "Date", "asset": "Ticker", "price": "Close"},
+  "timestamps": {"time": {"format": "date", "timezone": "UTC", "time_of_day": "16:00:00"}},
+  "availability": {"mode": "assumed_delay", "observed_delay_seconds": 0, "available_delay_seconds": 0},
+  "universe": {"policy": "known_by_cutoff", "cutoff": "2024-01-01T16:00:00Z"},
+  "calendar": {"policy": "fixed_step", "start": "2024-01-01T16:00:00Z", "end": "2024-01-12T16:00:00Z", "step_seconds": 86400},
+  "price_semantics": {"kind": "unadjusted_close", "unit": "synthetic USD per share", "adjustment_notes": "Hand-authored hypothetical prices; no corporate-action adjustment or market-data qualification."},
+  "experiment": {
+    "lookback": 1, "horizon": 1, "cost_bps": 10, "candidates": ["momentum", "reversal"],
+    "splits": {
+      "train": {"start": "2024-01-01T16:00:00Z", "end": "2024-01-04T16:00:00Z"},
+      "validation": {"start": "2024-01-05T16:00:00Z", "end": "2024-01-08T16:00:00Z"},
+      "test": {"start": "2024-01-09T16:00:00Z", "end": "2024-01-12T16:00:00Z"}
+    }
+  }
+}

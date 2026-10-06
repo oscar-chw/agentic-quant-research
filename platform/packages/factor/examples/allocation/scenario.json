@@ -1,0 +1,18 @@
+{
+  "schema_version": "factor-allocation-scenarios/v1",
+  "decision_time": "2024-01-10T16:00:00Z",
+  "policy_fixed_by": "2024-01-04T16:00:00Z",
+  "reference_capital": 1000,
+  "prior_cash": 1000,
+  "prior_weights": {"A": 0.03, "B": 0, "C": -0.03},
+  "score_scale": 0.02,
+  "risk_aversion": 1000,
+  "ridge": 0.1,
+  "target_net": 0,
+  "cases": [
+    {"name": "low-cost", "cost_bps": 10, "gross_limit": 1.0, "position_cap": 0.5},
+    {"name": "high-cost", "cost_bps": 500, "gross_limit": 1.0, "position_cap": 0.5},
+    {"name": "tight-gross", "cost_bps": 10, "gross_limit": 0.1, "position_cap": 0.5},
+    {"name": "tight-position", "cost_bps": 10, "gross_limit": 1.0, "position_cap": 0.04}
+  ]
+}

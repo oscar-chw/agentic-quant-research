@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "adapter_id": "replace-with-stable-price-source-id",
+  "adapter_version": "1.0.0",
+  "market_family": "replace-with-work-order-market-family",
+  "source_kind": "HTTPS_BYTES",
+  "base_url": "https://data.example.com",
+  "allowed_hosts": [
+    "data.example.com"
+  ],
+  "read_only": true,
+  "auth_mode": "none",
+  "data_tier": "TIER_0",
+  "normalized_schema": "qrae.price-bars.v1",
+  "license_status": "VERIFY_SOURCE_TERMS_BEFORE_USE",
+  "evidence_ceiling": "E0"
+}

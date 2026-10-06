@@ -1,0 +1,41 @@
+{
+  "schema": "asof-ablation-protocol/v1",
+  "id": "binance-daily-2026-10",
+  "registered": "2026-10-03, committed before any run on the real data",
+  "data_label": "REAL",
+  "question": "Does an LLM proposer, grounded in the vault notes, choose better lagged-return hypotheses than enumerating the whole grid or drawing K at random?",
+  "universe": {
+    "file": "fixtures/binance_universe.json",
+    "caveat": "SURVIVORSHIP-BIASED: 34 pairs still trading in 2026, each listed since 2020-01-01; KNCUSDT absent (fetch HTTP 404)."
+  },
+  "import": {"experiment": "results/real-2026-10/experiment.json", "command": "factor-research from-ohlcv"},
+  "timing": "delay 1: the signal at decision day t uses closes up to day t-1 only; the position is entered at the close of day t and held to the close of day t+1. Bars close at 23:59:59 UTC and the close is the execution mark, so available_delay_seconds is 0.",
+  "splits": {"train": "2020-01-01..2023-12-31 (warm-up and lookbacks only)", "validation": "2024-01-01..2024-12-31", "test": "2025-01-01..2026-08-31"},
+  "grid": {"signals": ["momentum", "reversal"], "min_lookback": 1, "max_lookback": 60},
+  "selection": "Within each arm, the hypothesis with the highest validation mean rank IC; grid order (momentum before reversal, shorter lookback first) breaks ties. The test split never enters a selection.",
+  "arms": {
+    "llm": {"campaign": "results/real-2026-10/campaign.json", "k": 8, "model": "opus", "max_live_calls": 12,
+            "transport": "local claude -p, tools disabled, recorded to apps/quantos/examples/loop/replay.real-2026-10.json",
+            "eligible": "every proposal the loop froze as a method card; the loop's own card rule and critic run unchanged",
+            "on_failure": "if claude fails, is logged out or returns 429, stop live calls, record why, and report the LLM arm as pending"},
+    "grid": {"hypotheses": "every signal x lookback in the grid (120)"},
+    "random": {"k": 8, "seed": 20261003, "distribution_draws": 10000}
+  },
+  "baselines": {
+    "momentum_20": {"signal": "momentum", "lookback": 20},
+    "reversal_1": {"signal": "reversal", "lookback": 1},
+    "equal_weight_hold": {}
+  },
+  "costs": {
+    "bps_per_side": 10,
+    "primary": "rebalanced: one book held across days, traded daily back to the factor lab's unit-gross rank weights after drift; cost = 10 bps x traded notional, entry and final exit included",
+    "conservative": "sleeve: the factor lab's own model, every position opened and closed every day (also what the loop's card rule uses)"
+  },
+  "metrics": ["mean daily rank IC with its t-stat and one-sided p", "mean daily net return per unit gross (rebalanced, and sleeve)", "mean daily traded notional (turnover)", "annualised Sharpe of daily net (x sqrt 365)"],
+  "gate": "Promote an arm's selection (and, in the LLM loop, a card awaiting the human gate) only if its test rebalanced net mean is > 0 AND > the highest test rebalanced net mean among the three baselines. The LLM arm's selection must also have passed the loop's card rule and critic. Applied by code; no discretionary human decision.",
+  "multiple_testing": {
+    "alpha": 0.05,
+    "report": ["hypotheses tested on validation per arm and distinct overall", "Bonferroni-adjusted validation p of each selection", "deflated Sharpe (Bailey and Lopez de Prado 2014) of each selection's validation daily IC series against its arm's trials", "Holm-adjusted test p across the arms' selections", "the per-hypothesis validation and test table"]
+  },
+  "interpretation": "A negative or null result is reported as such. The LLM may know 2024-2026 market history from pre-training, so an LLM win would be read as possible leakage, not skill, unless it survives a later period."
+}

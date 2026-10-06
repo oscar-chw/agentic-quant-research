@@ -1,0 +1,228 @@
+{
+  "schema": "asof-ablation-protocol/v2",
+  "id": "binance-daily-forward-2026-09",
+  "registered": "2026-10-03, committed before any LLM call and before any bar after 2026-08-31 was fetched",
+  "supersedes": "results/real-2026-10/protocol.json for the LLM comparison; the v1 results stay as committed",
+  "data_label": "REAL",
+  "question": "Does an LLM proposer, grounded in the vault notes, choose better lagged-return hypotheses than enumerating the whole grid or drawing K at random, on a test window no selection can depend on?",
+  "used_windows": {
+    "2025-01-01..2026-08-31": "USED. It is the v1 test split (results/real-2026-10, commit 2ec30c8), and the sibling repository alpha-gp-lab evaluated the same 34 pairs, splits, seed 20261003, 10 bps and the momentum-20 and reversal-1 baselines at its commit 2eeb94a, 14 minutes before the v1 protocol commit. In v2 it is part of validation."
+  },
+  "universe": {
+    "file": "fixtures/binance_universe_forward.json",
+    "symbols": "the 34 of fixtures/binance_universe.json, bars 2020-01-01..2027-08-31",
+    "when": "written and committed with every file's SHA-256 after the forward bars are fetched and before the study is scored",
+    "caveat": "SURVIVORSHIP-BIASED in validation, as in v1. Within the test window the universe is fixed before the window is scored, so it carries no look-ahead survivorship there.",
+    "delisting": "In code: quantos_showcase.ablation.fill_missing (`ablation fill`), run by scripts/real_run.sh before import. A pair with no bar on a date up to the test end gets a bar at its last available close with zero volume (zero return, still ranked); the filled pairs and date ranges go to results/forward-2026-09/filled-pairs.json. Robustness run (DELISTED=drop, amendment 3): the UNFILLED data, so a pair is absent only on the dates it lacks; a held pair with no exit bar closes at its last close and is not held afterwards. Validation is untouched, so the frozen selections reproduce and the same picks are compared; results go to robustness-dropped/. It never decides."
+  },
+  "import": {
+    "experiment": "results/forward-2026-09/experiment.json",
+    "command": "factor-research from-ohlcv"
+  },
+  "timing": "delay 1, as in v1: the signal at decision day t uses closes up to day t-1; the position is entered at the close of day t and held to the close of day t+1.",
+  "splits": {
+    "train": "2020-01-01..2023-12-31 (warm-up and lookbacks only)",
+    "validation": "2024-01-01..2026-08-31",
+    "test": "2026-09-01..2027-08-31, scored once after its last bar is published, with no interim look. Not fetched by this repository before registration; bars from 2026-09-01 to 2026-10-03 were public at registration. The grid and random-K selections are fixed by validation and frozen in selections.json, so they cannot use those bars; the LLM's proposals could only through the model's training data (see contamination)."
+  },
+  "grid": {
+    "signals": [
+      "momentum",
+      "reversal"
+    ],
+    "min_lookback": 1,
+    "max_lookback": 60
+  },
+  "selection": "Within each arm, the hypothesis with the highest validation mean REBALANCED NET, the metric the gate uses; grid order breaks ties. The test split never enters a selection. Each arm also reports, as secondary and never gating, what selection on validation mean rank IC would have picked.",
+  "arms": {
+    "llm": {
+      "campaign": "results/forward-2026-09/campaign.json",
+      "k": 8,
+      "model": "qwen/qwen3.8-27b:free",
+      "weights": {
+        "repository": "Qwen/Qwen3.8-27B (Hugging Face), open weights",
+        "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "revision_date": "2026-08-14T15:00:01Z, the date of the pinned commit (\"Update README.md\"); the files it holds were uploaded in earlier commits, e.g. \"Upload folder using huggingface_hub\" on 2026-08-13",
+        "license": "Apache-2.0 (the revision's license tag and card data)",
+        "created_on_hugging_face": "2026-08-05T08:22:59Z, the repository's creation (createdAt; its initial commit)",
+        "listed_on_openrouter": "2026-08-14 (created 1786722910, 15:55:10 UTC; hugging_face_id Qwen/Qwen3.8-27B; price 0)",
+        "sources": [
+          "https://huggingface.co/api/models/Qwen/Qwen3.8-27B/revision/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+          "https://huggingface.co/api/models/Qwen/Qwen3.8-27B/commits/main",
+          "https://openrouter.ai/api/v1/models"
+        ],
+        "evidence": "results/forward-2026-09/model-evidence/: the three API responses as fetched at 2026-10-04T20:18:59Z (2026-10-05 04:18:59 UTC+08:00), with a README naming each URL",
+        "limitation": "OpenRouter does not say which revision or quantisation it serves, and model_check compares only the id string, so that the arm runs these weights rests on OpenRouter serving this release (its listing names hugging_face_id Qwen/Qwen3.8-27B)."
+      },
+      "transport": "POST https://openrouter.ai/api/v1/chat/completions (OpenAI-compatible), Authorization: Bearer key read from the OPENROUTER_API_KEY environment variable, or from ~/.config/openrouter/api_key when that variable is unset (scripts/forward_propose.sh and scripts/real_run.sh load the file into the variable; qrae.llm.OpenRouterProvider reads only the variable); the key is never printed, logged, recorded or committed. qrae.llm.OpenRouterProvider; recorded to the replay files named in steps. No Anthropic or OpenAI model is used.",
+      "request": {
+        "body": {
+          "model": "qwen/qwen3.8-27b:free",
+          "messages": [
+            {
+              "role": "user",
+              "content": "<the prompt>"
+            }
+          ],
+          "temperature": 0,
+          "max_tokens": 8192,
+          "reasoning": {
+            "effort": "low",
+            "exclude": true
+          }
+        },
+        "refused_and_not_recorded": "an HTTP status other than 200 (429 is the rate limit); a top-level error or choices[0].error; a finish_reason other than stop (length included); content that is not a non-empty string; a response body over 256 KiB; a response model other than the pinned id"
+      },
+      "rate_limits": "OpenRouter free tier (docs, api-reference/limits): 20 requests a minute; 50 a day without purchased credits. The budget of 12 calls fits.",
+      "live_call_budget": {
+        "total": 12,
+        "synthetic_smoke": 3,
+        "propose": 1,
+        "critic": 8
+      },
+      "steps": [
+        "scripts/forward_propose.sh: a live smoke run on the SYNTHETIC control panel (at most 3 calls) to show the transport returns schema-valid output, then the real proposals alone (1 call, no prices read), recorded to apps/quantos/examples/loop/replay.live-synthetic.json and replay.forward-2026-09.json",
+        "commit both replays before any bar after 2026-08-31 is fetched",
+        "after 2027-08-31: STUDY=results/forward-2026-09 scripts/real_run.sh --live replays the committed proposals and calls the critic live (at most 8 calls)"
+      ],
+      "promotion": "same_as_other_arms: the arm's validation-NET selection is promoted by the shared gate alone. The loop's own card rule (validation only, sleeve cost) and critic still run and are reported, but do not enter promotion.",
+      "on_failure": "if the key is missing, the endpoint returns 429 or another error, or a response is refused, stop live calls, record why, and report the arm as pending",
+      "contamination": "The pinned revision 1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0 of Qwen/Qwen3.8-27B is dated 2026-08-14, the Hugging Face repository was created on 2026-08-05, and OpenRouter listed the model on 2026-08-14, all before the test window starts (2026-09-01) (evidence: results/forward-2026-09/model-evidence/). Weights published before any test-window bar existed cannot have been trained on test-window bars, so the pinned weights are not contaminated by the test window. Limitation: OpenRouter does not say which revision or quantisation it serves, and model_check compares only the id string, so this rests on OpenRouter serving that release. Record the model id, the revision and each response's model, provider and id.",
+      "model_check": "each response's model must be qwen/qwen3.8-27b:free or qwen/qwen3.8-27b; any other answer is refused and not recorded, and each accepted response's model, provider and id are written into the replay provenance. A failed call stops live calls (on_failure) and is never retried under another model.",
+      "retirement": "If the free endpoint is retired when the critic runs after 2027-08-31, the critic runs the same open weights (Qwen/Qwen3.8-27B at revision 1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0) with the same request settings on any host serving them, recorded as a deviation in DEVIATIONS.md. It never runs under a different model."
+    },
+    "grid": {
+      "hypotheses": "every signal x lookback in the grid (120)"
+    },
+    "random": {
+      "k": 8,
+      "seed": 20261003,
+      "distribution_draws": 10000
+    }
+  },
+  "baselines": {
+    "momentum_20": {
+      "signal": "momentum",
+      "lookback": 20
+    },
+    "reversal_1": {
+      "signal": "reversal",
+      "lookback": 1
+    },
+    "equal_weight_hold": {}
+  },
+  "costs": {
+    "bps_per_side": 10,
+    "gate": "rebalanced, for every arm: one book held across days, traded daily back to the factor lab's unit-gross rank weights after drift; cost = 10 bps x traded notional, entry and final exit included",
+    "reported_only": "sleeve: every position opened and closed every day, about 20 bps a day of cost, a hurdle no slow daily signal clears; it is the loop card rule's cost and is shown, never gated on"
+  },
+  "metrics": [
+    "mean daily rank IC with plain and Newey-West (Bartlett, lag 5) t-stats and one-sided p (secondary)",
+    "mean daily rebalanced net with its Newey-West t and one-sided p (primary: selects, gates, and decides)",
+    "mean daily net return per unit gross (rebalanced, and sleeve)",
+    "mean daily traded notional (turnover)",
+    "annualised Sharpe of daily net (x sqrt 365)"
+  ],
+  "gate": "Promote an arm's selection only if its test rebalanced net mean is > 0 AND > the highest test rebalanced net mean among the three baselines. The same rule for all three arms, applied by code.",
+  "verdict": {
+    "metric": "net_mean",
+    "alpha": 0.05,
+    "newey_west_lags": 5,
+    "paired_against": [
+      "grid",
+      "random-K"
+    ],
+    "rule": "Computed by quantos_showcase.ablation.verdict. An arm helps only if its selection is promoted and its DAILY TEST NET has one-sided Newey-West p < 0.05. The headline comparison is paired: the LLM helps only if its arm helps and a one-sided Newey-West test on the daily LLM-minus-grid net difference, and on the daily LLM-minus-random-K difference, each has p < 0.05. Identical picks have no difference to test and do not count as a win.",
+    "newey_west_lags_note": "ablation.verdict refuses a protocol whose lag differs from the lag the arms' p-values are computed with (5)."
+  },
+  "multiple_testing": {
+    "alpha": 0.05,
+    "report": [
+      "hypotheses tested on validation per arm and distinct overall",
+      "Bonferroni-adjusted validation p of each selection",
+      "deflated Sharpe of each selection's daily validation series (net, the selection metric): headline = the null sampling variance 1/T with the Li-Ji and Nyholt effective numbers of trials from the eigenvalues of the trials' correlation matrix, reported as a range; the full table over three variances and five trial counts as a sensitivity table, with the cells that pair a trial-Sharpe variance (already shrunk by the trials' correlation) with a reduced N flagged as double counting; descriptive, never the verdict",
+      "Holm-adjusted test p across the three arms' selections, on the verdict's p (daily net, Newey-West)",
+      "the per-hypothesis validation and test table",
+      "the range of outcomes any K-card selection could have produced"
+    ]
+  },
+  "power": "Stated before any LLM call, from validation data only (scripts/power_forward.py -> power.json). BREAK-EVEN thresholds, where a one-sided 5% test over one year (364 intervals; computed with 365) rejects half the time (50% power): 1.645 x (HAC sd per day) / sqrt(365). Single arm, daily net: about 8.7 bps/day for momentum-25 (7.8-9.1 across the hypotheses checked), 2.7x the best validation net (3.21). Paired LLM-minus-arm difference: 1.4-1.5 bps/day for an adjacent lookback (momentum-24 or -26 against momentum-25), 3.6-4.1 for momentum-20 or -19, 5.3 for momentum-14, 7.4 for momentum-05 and 13.7 for reversal-02. POWER: if momentum-25's true test mean equals its validation net (3.21 bps/day), the arm-level test rejects with probability about 15%; 80% power needs about 13.2 bps/day. For a neighbouring pick the paired threshold is below the arm-level one, so the arm-level test binds. Rank IC (secondary): only a mean above about 0.023 is significant. A null is the likely outcome and is reported as such.",
+  "deviations": "Any departure from this file is written to results/forward-2026-09/DEVIATIONS.md before the study is scored, or, if found after, beside the results with the reason.",
+  "selection_metric": "net_mean",
+  "selections": "results/forward-2026-09/selections.json",
+  "selection_import": {
+    "experiment": "results/forward-2026-09/selection-experiment.json",
+    "why": "The factor lab's last split is the only one that may end at the last available bar, so the selection-time import puts the v2 validation window (2024-01-01..2026-08-31) in that slot. A split's metrics do not depend on its slot; the scoring run refuses to proceed unless its validation numbers equal selections.json to 1e-12.",
+    "command": "python -m quantos_showcase.ablation select (see results/forward-2026-09/README.md)"
+  },
+  "predictions": {
+    "grid_ic_selection": "Selecting on validation rank IC, as v2 first registered, picks reversal-02 (validation IC +0.0187, validation net -11.63 bps/day per selections.json), predicted to fail the net gate; random-K's IC pick is reversal-04 (-11.74 bps/day). That is why amendment 1 selects on net: with IC selection, 'the LLM beats the grid' would be nearly free.",
+    "net_selections": "On validation net the grid picks momentum-25 (+3.21 bps/day) and random-K momentum-19 (+2.21 bps/day); both are frozen in selections.json.",
+    "ic_success_near_impossible": "0 of 120 hypotheses have positive validation net AND positive validation rank IC (power.json). Every net-selected pick has negative validation IC (momentum-25 -0.0091, momentum-19 -0.0088), so a verdict on test IC would be predicted 'does not help' for every arm whatever the LLM proposes. That is why amendment 2 tests net, the metric that selects."
+  },
+  "amendments": [
+    {
+      "id": 1,
+      "committed": "2026-10-03, before any LLM call; no LLM output, forward bar or v2 score existed",
+      "reason": "round-2 review of the v2 design (review/asof-research.md, outside this repository)",
+      "changes": [
+        "selection on validation rebalanced net instead of rank IC, and IC selection reported as secondary",
+        "the grid and random-K selections frozen now in selections.json, with the scoring run checking them",
+        "the deflated-Sharpe headline moved from (distinct trial variance, participation-ratio N), which counts the correlation twice, to the null variance with Li-Ji and Nyholt N",
+        "the test window described truthfully: public at registration, unusable by any frozen selection",
+        "the model pinned by full id and checked against the CLI-reported id",
+        "the verdict computed in code with the Newey-West p",
+        "a rule for pairs delisted in the test window"
+      ]
+    },
+    {
+      "id": 2,
+      "committed": "2026-10-03, before any LLM call; no LLM output, forward bar or v2 score existed",
+      "reason": "round-3 review of the v2 design (review/asof-research.md, outside this repository)",
+      "changes": [
+        "the verdict tests daily test NET (Newey-West, one-sided), the metric that selects and gates, instead of rank IC",
+        "the LLM-vs-grid and LLM-vs-random-K comparisons are paired one-sided Newey-West tests on the daily net difference, not a comparison of two point estimates",
+        "rank IC becomes a secondary, reported metric; the prediction that IC-based success is near-impossible is written down",
+        "power for net and for the paired difference stated, with the calculation in scripts/power_forward.py and power.json",
+        "the delisting rule implemented in code, with its robustness run"
+      ]
+    },
+    {
+      "id": 3,
+      "committed": "2026-10-03, before any LLM call; no LLM output, forward bar or v2 score existed",
+      "reason": "round-4 review (review/asof-research.md, outside this repository): the drop run as written in amendment 2 deleted a delisted pair's whole history, so it could not reproduce the frozen selections and crashed",
+      "changes": [
+        "the delisting robustness run is the unfilled data (a pair absent only on the dates it lacks), replacing amendment 2's 'left out entirely'; tested end to end through scoring with a pair delisted in the test window",
+        "power is stated as break-even thresholds plus true power at a stated alternative (about 15% at 3.21 bps/day; 80% needs about 13.2)",
+        "the Newey-West lag is read from the protocol and checked against the arms' lag"
+      ]
+    },
+    {
+      "id": 4,
+      "committed": "2026-10-03, before any LLM call; no LLM output, forward bar or v2 score existed",
+      "reason": "round-5 review (review/asof-research.md, outside this repository)",
+      "changes": [
+        "wording only: the verdict's rule is written out as plain prose in ablation.json, and the power text says one year (364 intervals) instead of 365 days; no rule, threshold or number changed",
+        "the delisting robustness run is listed as step 5 in the README",
+        "not a scoring rule, recorded for completeness: scripts/fetch_binance_daily.py ends a pair's listing at a 404 after its listed months instead of stopping, and scripts/real_run.sh creates its work directory (it exited before scoring)"
+      ]
+    },
+    {
+      "id": 5,
+      "committed": "2026-10-05, before any LLM call; no LLM output, forward bar or v2 score existed",
+      "reason": "Oscar's decision on 2026-10-05 that the LLM arm uses no Anthropic and no OpenAI model, in any form. claude-opus-5-5 was never called: the claude CLI was logged out, so no output from it exists.",
+      "changes": [
+        "arms.llm.model is qwen/qwen3.8-27b:free, the open weights Qwen/Qwen3.8-27B (revision 1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0, Apache-2.0) served free on OpenRouter; the call budget is unchanged",
+        "model_check: each response's model must be the pinned id (with or without :free), otherwise the answer is refused",
+        "contamination: the pinned revision is dated 2026-08-14, the Hugging Face repository was created on 2026-08-05 and OpenRouter listed the model on 2026-08-14, all before the test window starts, so the pinned weights cannot have been trained on test-window bars; this rests on OpenRouter serving that release, since it does not say which revision or quantisation it serves",
+        "transport: the key comes from OPENROUTER_API_KEY, or from ~/.config/openrouter/api_key when that variable is unset, as the scripts implement it",
+        "on_failure: a missing key, a 429 or another error stops live calls; the reason is recorded and the arm reported as pending",
+        "the request settings are pre-registered: temperature 0, max_tokens 8192, reasoning effort low with the reasoning excluded from the response",
+        "retirement: if the free endpoint is gone when the critic runs, the same open weights run on another host, as a deviation; never another model"
+      ],
+      "text_completed": "2026-10-05, the same day and before any LLM call, after a review (review/justify-asof-research.md, outside this repository). As first committed, this amendment left protocol.json with SHA-256 665b7c5c3c80b932fe4e878bce2265492723415bbc9d69d96460b63274cb67e7. The completion sources the dates to committed API responses (model-evidence/), adds the pinned revision's own date (2026-08-14) beside the repository's creation date, limits the contamination claim to the pinned weights and states that OpenRouter does not say which revision or quantisation it serves, and writes the key source as the scripts implement it. No rule, threshold or model changed. The reasoning setting changed from effort none (not offered for this model per the committed listing) to effort low with reasoning excluded, before any LLM call."
+    }
+  ],
+  "selections_check": "selections.json's 120-row validation table was also recomputed from the raw CSVs with pandas (the method of scripts/crosscheck_real.py): max difference 1.1e-16.",
+  "secondary_metrics": "Test rank IC with plain and Newey-West t and p, reported for every arm; it never enters selection, promotion or the verdict."
+}

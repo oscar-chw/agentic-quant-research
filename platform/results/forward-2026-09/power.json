@@ -1,0 +1,33 @@
+{
+ "best_validation_net_bps_per_day": 3.2127117974665724,
+ "binding_test": "For a neighbouring pick the paired threshold is below the single-arm one, so the arm-level test on the LLM pick's own net binds, not the paired test.",
+ "label": "computed from validation data (through 2026-08-31) for protocol v2 amendments 2 and 3, before any LLM call",
+ "method": "break-even threshold (50% power) = 1.645 * HAC sd per day / sqrt(365); HAC = Newey-West, Bartlett kernel, lag 5; power(mu) = Phi((mu - threshold) / (threshold / 1.645))",
+ "momentum-25_mean_for_80pct_power_bps_per_day": 13.160446393531101,
+ "momentum-25_power_if_true_mean_is_its_validation_net": 0.14966797347812755,
+ "paired_difference_break_even_bps_per_day": {
+  "momentum-05 minus momentum-25": 7.353202531593016,
+  "momentum-14 minus momentum-25": 5.299006104273906,
+  "momentum-19 minus momentum-25": 4.073486530289495,
+  "momentum-20 minus momentum-25": 3.5510497219455486,
+  "momentum-24 minus momentum-25": 1.5142576548343918,
+  "momentum-26 minus momentum-25": 1.3962302894385552,
+  "reversal-02 minus momentum-25": 13.666969010644562
+ },
+ "positive_validation_net_and_ic": {
+  "count": 0,
+  "ids": [],
+  "of": 120
+ },
+ "single_arm_break_even_net_bps_per_day": {
+  "momentum-05": 8.954775244252579,
+  "momentum-14": 8.577704348787389,
+  "momentum-19": 9.111593221906746,
+  "momentum-20": 8.95643887521868,
+  "momentum-24": 8.722550418375333,
+  "momentum-25": 8.705902611914924,
+  "momentum-26": 8.629731666634285,
+  "reversal-02": 7.818716166646173
+ },
+ "validation_intervals": 973
+}

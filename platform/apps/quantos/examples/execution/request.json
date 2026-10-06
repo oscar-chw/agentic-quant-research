@@ -1,0 +1,10 @@
+{
+  "schema": "quantos-execution-request/v1",
+  "method": "imc4-inventory-quote-study/v1",
+  "question": "How does inventory adjustment change quotes, outstanding exposure, fills and marked P&L under the same finite demand paths and cancellation assumptions?",
+  "source": {
+    "id": "avellaneda-stoikov-local-note",
+    "path": "source.md",
+    "sha256": "c045f59f4abe0ea01935ada4683121eeb0653e32dc9fa1961547eefb0d356194"
+  }
+}

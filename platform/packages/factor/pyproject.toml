@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "offline-factor-research"
+version = "0.4.0"
+description = "Platform-independent offline factor experiments with explicit time and trial contracts"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+factor-research = "factor_research.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

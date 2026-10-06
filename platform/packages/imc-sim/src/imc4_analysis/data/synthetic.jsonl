@@ -1,0 +1,13 @@
+{"type":"config","schema":"imc4-analysis/v1","label":"Synthetic fill and inventory investigation","data_kind":"synthetic","currency":"TEST_CCY","timestamp_unit":"simulation_tick","start_timestamp":0,"initial_cash":"1000","mark_max_age":2,"markout_horizon":2,"instruments":{"ALPHA":{"initial_position":0,"limit":2},"BETA":{"initial_position":0,"limit":1}}}
+{"type":"quote","timestamp":0,"sequence":0,"instrument":"ALPHA","bid":"99","ask":"101"}
+{"type":"fill","timestamp":1,"sequence":0,"instrument":"ALPHA","fill_id":"roundtrip-buy","side":"buy","units":2,"price":"101","fee":"1","note":"Open the hand-calculated round trip"}
+{"type":"quote","timestamp":2,"sequence":0,"instrument":"ALPHA","bid":"103","ask":"105"}
+{"type":"fill","timestamp":3,"sequence":0,"instrument":"ALPHA","fill_id":"roundtrip-sell","side":"sell","units":2,"price":"105","fee":"1","note":"Flat again: net cash gain is 6"}
+{"type":"quote","timestamp":4,"sequence":0,"instrument":"ALPHA","bid":"99","ask":"101"}
+{"type":"fill","timestamp":5,"sequence":0,"instrument":"ALPHA","fill_id":"bad-fill","side":"buy","units":3,"price":"110","note":"Deliberately overpriced buy; position 3 exceeds limit 2"}
+{"type":"quote","timestamp":6,"sequence":0,"instrument":"ALPHA","bid":"95","ask":"97"}
+{"type":"quote","timestamp":7,"sequence":0,"instrument":"BETA","mark":"20"}
+{"type":"quote","timestamp":8,"sequence":0,"instrument":"BETA","mark":"21"}
+{"type":"quote","timestamp":9,"sequence":0,"instrument":"BETA","mark":"22","note":"ALPHA mark is stale: valid portfolio equity is unavailable"}
+{"type":"quote","timestamp":10,"sequence":0,"instrument":"ALPHA","bid":"96","ask":"98"}
+{"type":"fill","timestamp":11,"sequence":0,"instrument":"ALPHA","fill_id":"partial-exit","side":"sell","units":1,"price":"98","note":"Back within limit, two units remain; future markout unavailable"}

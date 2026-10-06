@@ -1,0 +1,11 @@
+{
+  "schema": "quantos-loop-campaign/v1",
+  "id": "lagged-return-ranking",
+  "question": "Does a lagged cross-sectional return signal rank next-interval returns on this daily panel?",
+  "k": 5,
+  "data_label": "SYNTHETIC",
+  "retrieval": {"query": "cross-sectional momentum reversal lagged returns winners losers", "n_results": 4},
+  "signals": ["momentum", "reversal"],
+  "max_lookback": 10,
+  "rule": {"min_rank_ic": "1/10", "min_valid_dates": 10, "min_net_mean": "0"}
+}

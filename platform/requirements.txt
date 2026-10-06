@@ -1,0 +1,10 @@
+# Test and demo dependencies, pinned to the versions the recorded check used.
+pytest==9.1.1
+# Optional C++ hot path (make native-build / native-test).
+pybind11==3.1.0
+hypothesis==6.168.3
+# Only for scripts/crosscheck_real.py (the independent pandas recomputation of the real-data results).
+numpy==2.4.6
+pandas==3.0.6
+# Optional, only for tools/render_selection.py (the README figure); the tests read its JSON extract instead.
+# matplotlib==3.11.2

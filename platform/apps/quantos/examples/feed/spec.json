@@ -1,0 +1,12 @@
+{
+  "schema": "quote-spec/v1",
+  "instrument": "DEMO",
+  "data_kind": "synthetic",
+  "price_tick": "0.0001",
+  "start_ms": 0,
+  "step_ms": 10,
+  "count": 12,
+  "max_age_ms": 25,
+  "train_count": 4,
+  "validation_count": 4
+}

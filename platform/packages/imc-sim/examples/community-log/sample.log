@@ -1,0 +1,69 @@
+Sandbox logs:
+
+
+Activities log:
+day;timestamp;product;bid_price_1;bid_volume_1;bid_price_2;bid_volume_2;bid_price_3;bid_volume_3;ask_price_1;ask_volume_1;ask_price_2;ask_volume_2;ask_price_3;ask_volume_3;mid_price;profit_and_loss
+0;0;ALPHA;99;10;;;;;101;10;;;;;100;0
+0;0;BETA;49;10;;;;;51;10;;;;;50;0
+0;100;ALPHA;103;10;;;;;105;10;;;;;104;0
+0;100;BETA;47;10;;;;;49;10;;;;;48;0
+0;200;ALPHA;101;10;;;;;103;10;;;;;102;0
+0;200;BETA;48;10;;;;;50;10;;;;;49;0
+
+Trade History:
+[
+{
+  "timestamp": 0,
+  "buyer": "SUBMISSION",
+  "seller": "",
+  "symbol": "ALPHA",
+  "currency": "XIREC",
+  "price": 101,
+  "quantity": 2,
+},
+{
+  "timestamp": 0,
+  "buyer": "BOT_A",
+  "seller": "BOT_B",
+  "symbol": "BETA",
+  "currency": "XIREC",
+  "price": 50,
+  "quantity": 99,
+},
+{
+  "timestamp": 0,
+  "buyer": "",
+  "seller": "SUBMISSION",
+  "symbol": "BETA",
+  "currency": "XIREC",
+  "price": 50,
+  "quantity": 1,
+},
+{
+  "timestamp": 100,
+  "buyer": "",
+  "seller": "SUBMISSION",
+  "symbol": "ALPHA",
+  "currency": "XIREC",
+  "price": 105,
+  "quantity": 1,
+},
+{
+  "timestamp": 200,
+  "buyer": "BOT_A",
+  "seller": "BOT_B",
+  "symbol": "ALPHA",
+  "currency": "XIREC",
+  "price": 102,
+  "quantity": 4,
+},
+{
+  "timestamp": 200,
+  "buyer": "SUBMISSION",
+  "seller": "",
+  "symbol": "BETA",
+  "currency": "XIREC",
+  "price": 48,
+  "quantity": 1,
+}
+]
