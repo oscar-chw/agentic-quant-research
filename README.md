@@ -239,7 +239,7 @@ Docs: see [docs/README.md](docs/README.md); package names and owners in [archite
 ## Credits and licence
 
 - The envelope validator, which refuses an overclaiming run summary, comes from my
-  [codex-quant-os](https://github.com/Oscar-Codespace/codex-quant-os) (archived).
+  codex-quant-os, an earlier private project.
 - Price data: Binance public spot daily klines (data.binance.vision). The v2 LLM arm's model: the open weights Qwen3.8-27B, served on OpenRouter.
 - imc-sim's log parser is written independently from the format of the community [imc-prosperity-4-backtester](https://github.com/nabayansaha/imc-prosperity-4-backtester) at a pinned revision; no upstream code is distributed ([details](packages/imc-sim/docs/UPSTREAM_FORMAT.md)).
 - My other real-data result, a negative walk-forward, is [Polymarket-Crypto-5min](https://github.com/oscar-chw/Polymarket-Crypto-5min).
