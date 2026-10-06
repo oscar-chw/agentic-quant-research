@@ -543,10 +543,14 @@ def test_rows_of_a_window_ending_after_the_confirmation_start_are_refused():
 def test_statistics_report_the_variance_of_the_mean_over_correlated_paths():
     """12.5 (docs/afml_sections/ch12.md F12.2): the paths reuse the same C(N, k) split forecasts, so they are
     strongly correlated and the mean path Sharpe is far less precise than the spread across paths suggests."""
-    ev = _events(days=12, windows_per_day=8, per_window=2, seed=4)
-    res = bp.run_cpcv(ev, bp.Strategy("s", sizing=bp.fixed_stake(10.0)), n_groups=6, k_test=2, embargo=0)
+    # A trained model, so each split's forecasts differ. A rule that takes every event gives five identical paths,
+    # a variance of ~1e-33, and inequalities below that only compare rounding noise (they flipped on Linux).
+    ev = _events(days=12, windows_per_day=8, per_window=2, seed=0, signal=0.2)
+    res = bp.run_cpcv(ev, bp.Strategy("m", model=_logistic, threshold=0.55, sizing=bp.fixed_stake(10.0)),
+                      n_groups=6, k_test=2, embargo=0)
     st = bp.statistics(res)
     pm = st["path_mean"]
+    assert pm["variance"] > 1e-4                                  # the paths really differ
     assert pm["statistic"] == "sharpe" and pm["paths"] == len(res["paths"]) == 5
     assert pm["mean"] == pytest.approx(st["paths"]["sharpe"].mean())
     assert pm["variance"] == pytest.approx(st["paths"]["sharpe"].var(ddof=1))

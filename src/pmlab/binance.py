@@ -4,7 +4,9 @@ import pandas as pd
 
 from pmlab.http import get_json
 
-KLINES = "https://api.binance.com/api/v3/klines"
+# Binance's public market-data host: the same klines, byte for byte, as api.binance.com, which answers HTTP 451
+# to US addresses (GitHub's CI runners among them).
+KLINES = "https://data-api.binance.vision/api/v3/klines"
 
 
 def parse_klines(rows: list[list]) -> pd.DataFrame:
