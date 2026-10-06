@@ -13,6 +13,7 @@ so a changed prompt fails loudly instead of silently reusing an old answer.
 from __future__ import annotations
 
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -107,7 +108,7 @@ def _post(url: str, body: bytes, headers: dict, timeout: float) -> tuple[int, by
             return response.status, response.read(MAX_RESPONSE_BYTES + 1)
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read(MAX_RESPONSE_BYTES + 1)
-    except (urllib.error.URLError, OSError) as exc:
+    except (urllib.error.URLError, OSError, http.client.HTTPException) as exc:
         raise RuntimeError(f"OpenRouter request failed: {exc}") from exc
 
 

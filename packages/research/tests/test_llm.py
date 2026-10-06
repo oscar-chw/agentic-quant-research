@@ -1,5 +1,6 @@
 """Replay binding, the OpenRouter transport (faked, never called) and the broker seam."""
 
+import http.client
 import http.server
 import io
 import json
@@ -15,6 +16,7 @@ from qrae.llm import (
     OPENROUTER_MODEL,
     OPENROUTER_URL,
     MissingApiKey,
+    LiveCallFailed,
     LiveRunAborted,
     OpenRouterProvider,
     ReplayMiss,
@@ -293,6 +295,28 @@ def test_openrouter_does_not_follow_a_redirect_or_forward_the_key():
             server.server_close()
     assert status == 302
     assert seen == []
+
+
+@pytest.mark.parametrize("error", [http.client.IncompleteRead(b"par"), http.client.BadStatusLine("x"),
+                                   http.client.LineTooLong("header line")])
+def test_openrouter_default_transport_reports_a_connection_dropped_mid_response(monkeypatch, error):
+    class Dropping:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self, n):
+            raise error
+
+    monkeypatch.setattr(llm._OPENER, "open", lambda request, timeout: Dropping())
+    provider = OpenRouterProvider()
+    with pytest.raises(LiveCallFailed, match="request failed"):
+        provider.complete("k", b"p")
+    assert provider.recorded == []
 
 
 def test_a_failed_live_call_aborts_the_broker_seam_instead_of_becoming_a_quarantined_result(tmp_path):
