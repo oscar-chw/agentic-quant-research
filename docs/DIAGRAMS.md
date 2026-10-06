@@ -16,9 +16,9 @@ private, purple = the path the diagram is about.
 ## 1. The system and its components
 
 The book build in this repository at the centre, and the separate repositories around it: the paper layer of the
-vault (not used in this build), the agent harness that later packaged the build's practices, the research harness,
-and an earlier experiment that was not built from the book. The component table is in the
-[README](../README.md#components-of-the-system).
+vault (not used in this build), the agent harness that later packaged the build's practices, and an earlier
+experiment that was not built from the book. The point-in-time research platform (platform/) lives in this
+repository too. The component table is in the [README](../README.md#components-of-the-system).
 
 ```mermaid
 flowchart TB
@@ -32,7 +32,7 @@ flowchart TB
     end
     LIB["pmlab library<br/>and tests, this repo"]:::key
     AH["agent-harness<br/>rules, memory,<br/>guard, work graph"]:::step
-    ASOF["asof-research<br/>LLM proposes, code<br/>scores, human decides"]:::step
+    ASOF["Point-in-time research<br/>platform, platform/,<br/>this repo: LLM proposes,<br/>code scores, human decides"]:::key
     PM["Polymarket-Crypto-5min<br/>July 2026, separate,<br/>not from the book"]:::ext
     OSCAR -->|"goals, constraints"| GRAPH
     OSCAR -.->|"earlier experiment"| PM
@@ -52,7 +52,8 @@ flowchart TB
     classDef key fill:#ede9fe,stroke:#6d28d9,color:#0b1220,stroke-width:2px
 ```
 
-Where in the code: `docs/claims/`, `plan/`, `src/pmlab/afml/`, `tests/`; the other boxes are separate repositories.
+Where in the code: `docs/claims/`, `plan/`, `src/pmlab/afml/`, `tests/`, and [platform/](../platform/README.md) for the
+point-in-time research platform; the other boxes are separate repositories.
 
 ## 2. Inside the book build
 

@@ -10,7 +10,8 @@ paraphrased, cited claims and a tested Python library. The result in this reposi
 verified by passing tests (773 tests, 0 failing). Across the whole project, the orchestrator and about 140 AI
 subagents (per private session logs) completed 266 gated tasks.
 
-How the parts connect (purple marks this repository; every other named repository is a separate component):
+How the parts connect (purple marks this repository, including the point-in-time research platform (platform/);
+every other named repository is a separate component):
 
 ```mermaid
 flowchart TB
@@ -24,7 +25,7 @@ flowchart TB
     end
     LIB["pmlab library<br/>and tests, this repo"]:::key
     AH["agent-harness<br/>rules, memory,<br/>guard, work graph"]:::step
-    ASOF["asof-research<br/>LLM proposes, code<br/>scores, human decides"]:::step
+    ASOF["Point-in-time research<br/>platform, platform/,<br/>this repo: LLM proposes,<br/>code scores, human decides"]:::key
     PM["Polymarket-Crypto-5min<br/>July 2026, separate,<br/>not from the book"]:::ext
     OSCAR -->|"goals, constraints"| GRAPH
     OSCAR -.->|"earlier experiment"| PM
@@ -50,13 +51,14 @@ running; this repository is its record, the library and the tests.
 
 ## Components of the system
 
-Each row is a separate repository; its role and numbers are taken from that repository's README.
+Rows marked "this repo" live here; every other row is a separate repository. Each row's role and numbers are taken
+from that component's README.
 
 | Component | Repo | Role in the system | Key evidence |
 |---|---|---|---|
 | Book-to-library build (centrepiece) | this repo | The vault's book and results notes, and the library built from them under the gate graph | 1,417 of 1,805 claims have every named test passing; 773 tests pass, 0 fail ([evidence](docs/evidence.md#a-claims)) |
 | Vault, paper layer | [quant-research-vault](https://github.com/oscar-chw/quant-research-vault) | arXiv and OpenAlex metadata into SQLite, indexed in ChromaDB, searched read-only over MCP; not used in this build | 5 offline tests pass; 18,492 paper rows in its local, unpublished database at a 2026-07-30 audit |
-| Research harness | [asof-research](https://github.com/oscar-chw/asof-research) | Point-in-time harness: an LLM proposes hypotheses but never scores them; a pre-registered gate, then a human or a pre-registered rule decides. Also holds the factor lab and an order-book replay package | REAL Binance data, 34 pairs: the gate blocked both control picks, which lost 6.9 and 7.4 bps/day out of sample; the LLM arm is pending until 2027-08-31 |
+| The point-in-time research platform (platform/) | [platform/](platform/README.md), this repo | Point-in-time harness: an LLM proposes hypotheses but never scores them; a pre-registered gate, then a human or a pre-registered rule decides. Also holds the factor lab and an order-book replay package | REAL Binance data, 34 pairs: the gate blocked both control picks, which lost 6.9 and 7.4 bps/day out of sample; the LLM arm is pending until 2027-08-31 |
 | Agent harness | [agent-harness](https://github.com/oscar-chw/agent-harness) | The rules, memory, command guard and gated work graph, packaged as one install for AI coding tools | Held-out guard set: the v0.2 guard blocked 39 of 45 dangerous commands and allowed 20 of 20 safe ones; 836 tests pass (v0.3.2) |
 | Earlier experiment | [Polymarket-Crypto-5min](https://github.com/oscar-chw/Polymarket-Crypto-5min) | July 2026, separate, not built from the book: a point-in-time walk-forward backtester for Polymarket's Bitcoin 5-minute markets | Found and fixed a look-ahead leak; the corrected selected result is negative (−$12.31 on $160 staked, 16 trades) |
 
@@ -147,9 +149,11 @@ tests/            the published tests; unpublished.txt names the deselected ones
 docs/claims/      the book as 1,805 paraphrased claims, and the second reading
 plan/             sanitized copy of the build's 18 plan graphs
 scripts/          check, demo, claim ledger, plan statistics, copy check, plan export
+platform/         the point-in-time research platform: LLM-vs-brute-force study, factor lab, order-book replay
 ```
 
-Docs: see [docs/README.md](docs/README.md).
+Docs: see [docs/README.md](docs/README.md). The point-in-time research platform (platform/) has its own README,
+[platform/README.md](platform/README.md), with its own docs index, gate (`platform/scripts/check.sh`) and CI.
 
 ### Design decisions and trade-offs
 
