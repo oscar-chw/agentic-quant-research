@@ -78,9 +78,9 @@ Read them this way:
 - In v2's protocol.json, `used_windows` cites "commit 2ec30c8": that is the v1 run of
   2026-10-03 18:16:43, the outputs in the second table. It also cites "its commit
   2eeb94a": that hash belongs to the separate alpha-gp-lab repository, not this one. That
-  repository's commit hashes were re-issued on 2026-10-04, when its commit authorship was
-  re-attributed to Oscar's GitHub account; 2eeb94a is now `fea7780`, with the same tree and dates
-  (alpha-gp-lab docs/commit-hash-map.txt).
+  repository's history was rewritten on 2026-10-04 and 2026-10-06 (author attribution; removal of
+  third-party platform references), keeping every tree and date; that commit is now `74c2f81`
+  (alpha-gp-lab docs/evidence.md, "Commit hashes").
   "The v1 protocol commit" is v1's registration at 18:10:31.
 
 **Before October 2026** the code that became `packages/research` was `qrae-rd`

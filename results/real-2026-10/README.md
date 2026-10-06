@@ -17,8 +17,8 @@ forward window, with one promotion rule for every arm.
 - **The test window was not untouched.** The author's alpha-gp-lab repository
   evaluated the same 34 pairs, splits, seed 20261003,
   10 bps and the momentum-20 and reversal-1 baselines at commit `2eeb94a` of that
-  repository (2026-10-03 17:56:41 +08:00; re-issued as `fea7780` on 2026-10-04 with the same
-  tree and dates, when that repository's commit authorship was re-attributed). That was 14 minutes before this protocol
+  repository (2026-10-03 17:56:41 +08:00; now `74c2f81` after that repository's history rewrites
+  of 2026-10-04 and 2026-10-06, which kept every tree and date). That was 14 minutes before this protocol
   was registered (18:10:31). Its momentum-20 test IC of −0.00616 is this study's
   number. The protocol was registered before this repository ran anything on the
   data (protocol.json SHA-256
