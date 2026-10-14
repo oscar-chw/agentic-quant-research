@@ -25,19 +25,37 @@ import json
 import re
 import shutil
 import sys
+import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import method_contract
-from factor_research.prepare import convert_prices, load_prepared, parse_clock, prepare_prices
+from factor_research.prepare import (
+    convert_prices,
+    load_prepared,
+    parse_clock,
+    prepare_prices,
+)
 from factor_research.runs import run_trial, verify_run
+from factor_research.synthetic import make_fixture
 from note_index import NoteIndex
 from qrae import codex_broker
 from qrae.artifacts import canonical_json_bytes, sha256_bytes
-from qrae.llm import LiveRunAborted, MissingApiKey, OpenRouterProvider, ReplayProvider, ReplayThenLive, broker_runner, prompt_sha256, strip_fence
+from qrae.llm import (
+    LiveRunAborted,
+    MissingApiKey,
+    OpenRouterProvider,
+    ReplayMiss,
+    ReplayProvider,
+    ReplayThenLive,
+    broker_runner,
+    prompt_sha256,
+    strip_fence,
+)
 from qrae.quote_features import strict_json
 from qrae.quote_workflow import checked_bundle, read_input, reserve
-from source_access import query_note_sources
+from shared_manifest import SharedManifestError, load_shared_note
+from source_access import MAX_CANDIDATES, query_note_sources
 
 CAMPAIGN_SCHEMA = "quantos-loop-campaign/v1"
 CARD_KIND = "quantos-loop-card/v1"
@@ -54,6 +72,8 @@ DECISIONS = {"PROMOTED", "REJECTED_BY_HUMAN"}
 DECISION_FIELDS = {"hypothesis", "decision", "note", "ledger_sha256", "decided_at"}
 VERDICT_STATUS = {"NO_OBJECTION": "AWAITING_HUMAN", "CRITIC_REJECTED": "REJECTED_BY_CRITIC",
                   "CRITIC_UNUSABLE": "CRITIC_UNUSABLE"}
+NATIVE_CRITIC_POLICY = {"mode": "native_codex", "max_calls": 1,
+                        "timeout_seconds": 120, "holdout": "sealed"}
 
 
 def log(stage, **counts):
@@ -66,26 +86,38 @@ def read_campaign(raw):
     if not isinstance(campaign, dict) or set(campaign) != fields or campaign["schema"] != CAMPAIGN_SCHEMA:
         raise ValueError("exact " + CAMPAIGN_SCHEMA + " campaign required")
     method_contract.safe_id(campaign["id"])
+    if not isinstance(campaign["question"], str) or not campaign["question"].strip():
+        raise ValueError("question must be nonempty text")
     if type(campaign["k"]) is not int or not 1 <= campaign["k"] <= 20:
         raise ValueError("k must be an integer in 1..20")
-    if campaign["data_label"] not in {"SYNTHETIC", "REAL"}:
+    if not isinstance(campaign["data_label"], str) or campaign["data_label"] not in {"SYNTHETIC", "REAL"}:
         raise ValueError("data_label must be SYNTHETIC or REAL")
     retrieval = campaign["retrieval"]
     if not isinstance(retrieval, dict) or set(retrieval) != {"query", "n_results"}:
         raise ValueError("retrieval needs query and n_results")
-    if not set(campaign["signals"]) <= {"momentum", "reversal"} or not campaign["signals"]:
-        raise ValueError("the factor lab implements momentum and reversal only")
+    if not isinstance(retrieval["query"], str) or not retrieval["query"].strip():
+        raise ValueError("retrieval.query must be nonempty text")
+    if type(retrieval["n_results"]) is not int or not 1 <= retrieval["n_results"] <= MAX_CANDIDATES:
+        raise ValueError(f"retrieval.n_results must be an integer in 1..{MAX_CANDIDATES}")
+    signals = campaign["signals"]
+    if not isinstance(signals, list) or not signals or any(
+        not isinstance(signal, str) or signal not in {"momentum", "reversal"} for signal in signals
+    ):
+        raise ValueError("signals must be a nonempty list of momentum or reversal")
+    # Match the native method-card contract before asking a provider for unusable drafts.
+    if type(campaign["max_lookback"]) is not int or not 1 <= campaign["max_lookback"] <= 250:
+        raise ValueError("max_lookback must be an integer in 1..250")
     rule = campaign["rule"]
     if not isinstance(rule, dict) or set(rule) != {"min_rank_ic", "min_valid_dates", "min_net_mean"}:
         raise ValueError("rule needs min_rank_ic, min_valid_dates and min_net_mean")
     if not 0 < method_contract.rational(rule["min_rank_ic"]) <= 1 \
-            or type(rule["min_valid_dates"]) is not int or rule["min_valid_dates"] < 1:
-        raise ValueError("rule needs a rational min_rank_ic in (0, 1] and a positive min_valid_dates")
+            or type(rule["min_valid_dates"]) is not int or not 1 <= rule["min_valid_dates"] <= 5000:
+        raise ValueError("rule needs a rational min_rank_ic in (0, 1] and min_valid_dates in 1..5000")
     method_contract.rational(rule["min_net_mean"])
     return campaign
 
 
-def card_for(proposal, campaign, experiment, note_sha256):
+def card_for(proposal, campaign, experiment, note_sha256, *, source_kind="paper_note"):
     return {
         "schema": "vault-method/v1",
         "id": proposal["id"],
@@ -94,12 +126,80 @@ def card_for(proposal, campaign, experiment, note_sha256):
         "mechanism": proposal["mechanism"],
         "assumptions": proposal["assumptions"],
         "limitations": proposal["limitations"],
-        "sources": [{"id": proposal["citation"], "kind": "paper_note", "path": "source-0.md",
+        "sources": [{"id": proposal["citation"], "kind": source_kind, "path": "source-0.md",
                      "sha256": note_sha256, "relationship": "background", "use_scope": "local_review"}],
         "decision": {"signal": proposal["signal"], "lookback": proposal["lookback"],
                      "cost_bps": experiment["cost_bps"], "splits": experiment["splits"],
                      "metric": "rank_ic_mean", **campaign["rule"]},
     }
+
+
+def note_id(note):
+    return note["document_id"] if note.get("document_type") == "method_note" else note["metadata"]["arxiv_id"]
+
+
+def _shared_citation(note):
+    """Check retained method metadata as well as the snapshot's content digest."""
+    citation = method_contract.shared_note_citation(note)
+    method_contract.safe_id(citation["document_id"])
+    if not citation["title"].strip() or not citation["document"].strip() \
+            or len(citation["document"].encode("utf-8")) > method_contract.MAX_NOTE_BYTES:
+        raise ValueError("shared source needs a bounded nonempty title and document")
+    for field in ("source_sha256", "manifest_sha256"):
+        if not isinstance(citation[field], str) or not re.fullmatch(r"[0-9a-f]{64}", citation[field]):
+            raise ValueError("invalid shared source digest")
+    if sha256_bytes(citation["document"].encode("utf-8")) != citation["source_sha256"]:
+        raise ValueError("shared source digest differs from its document")
+    if citation["rights"] != {"license": "MIT", "basis": "original_summary", "redistribution": "public"}:
+        raise ValueError("shared source rights refused")
+    if not citation["source_refs"] or any(
+        not isinstance(ref, dict) or any(not isinstance(ref.get(k), str) or not ref[k].strip()
+                                         for k in ("uri", "kind", "revision"))
+        for ref in citation["source_refs"]
+    ):
+        raise ValueError("shared source provenance is incomplete")
+    return citation
+
+
+def source_record(note):
+    if note.get("document_type") == "method_note":
+        return {k: v for k, v in _shared_citation(note).items() if k != "document"}
+    return {"id": note["metadata"]["arxiv_id"], "sha256": note["metadata"]["source_sha256"]}
+
+
+def select_sources(campaign, vault, *, shared_root=None, manifest_sha256=None, note_ids=None):
+    """Explicit method-note selection; the default paper retrieval path is unchanged."""
+    if shared_root is None:
+        if manifest_sha256 is not None or note_ids is not None or vault is None:
+            raise ValueError("shared sources require root, manifest digest and note ids together")
+        return query_note_sources(NoteIndex(vault), campaign["retrieval"]["query"],
+                                  campaign["retrieval"]["n_results"], source_root=vault)["matches"]
+    if vault is not None or manifest_sha256 is None or not isinstance(note_ids, (list, tuple)) \
+            or not 1 <= len(note_ids) <= 8:
+        raise ValueError("select either a paper vault or a shared root, manifest digest and 1..8 note ids")
+    for identity in note_ids:
+        method_contract.safe_id(identity)
+    if len(set(note_ids)) != len(note_ids):
+        raise ValueError("shared note ids must be distinct")
+    notes = []
+    for identity in note_ids:
+        selected = load_shared_note(shared_root, identity, expected_manifest_sha256=manifest_sha256)
+        if selected["status"] != "MATCHES":
+            raise SharedManifestError("SHARED_NOTE_NO_MATCH", "selected method note was not found: " + identity)
+        note = selected["matches"][0]
+        _shared_citation(note)
+        notes.append(note)
+    return notes
+
+
+def prompt_source(note):
+    """Keep legacy paper prompts byte-stable; method notes retain their own type."""
+    if note.get("document_type") == "method_note":
+        citation = method_contract.shared_note_citation(note)
+        return {"id": citation["document_id"], "document_type": "method_note",
+                "title": citation["title"], "text": citation["document"],
+                **{key: citation[key] for key in ("source_sha256", "manifest_sha256", "source_refs", "rights")}}
+    return {"id": note["metadata"]["arxiv_id"], "title": note["metadata"]["title"], "text": note["document"]}
 
 
 def propose_prompt(campaign, experiment, notes):
@@ -115,8 +215,7 @@ def propose_prompt(campaign, experiment, notes):
         "max_lookback": campaign["max_lookback"],
         "fixed_by_campaign": {"splits": experiment["splits"], "cost_bps": experiment["cost_bps"],
                               "horizon_intervals": 1, "rule": campaign["rule"]},
-        "notes": [{"id": n["metadata"]["arxiv_id"], "title": n["metadata"]["title"], "text": n["document"]}
-                  for n in notes],
+        "notes": [prompt_source(n) for n in notes],
         "output": {"hypotheses": [{f: "..." for f in sorted(PROPOSAL_FIELDS)}],
                    "field_rules": "signal in allowed_signals; lookback integer 1..max_lookback; "
                                   "assumptions and limitations are 1..16 strings; citation is a note id"},
@@ -131,7 +230,7 @@ def check_proposals(response, campaign, notes):
             raise TypeError
     except (ValueError, KeyError, TypeError):
         return [{"id": None, "status": "INVALID", "reason": "UNPARSEABLE_RESPONSE"}], []
-    cited = {n["metadata"]["arxiv_id"]: n for n in notes}
+    cited = {note_id(n): n for n in notes}
     rows, valid, seen = [], [], set()
     for index, draft in enumerate(drafts):
         hid = draft.get("id") if isinstance(draft, dict) else None
@@ -154,7 +253,9 @@ def check_proposals(response, campaign, notes):
         if reason is None:
             try:
                 method_contract.validate_card(card_for(draft, campaign, {"cost_bps": 0, "splits": {
-                    s: {"start": "x", "end": "x"} for s in ("train", "validation", "test")}}, "0" * 64))
+                    s: {"start": "x", "end": "x"} for s in ("train", "validation", "test")}}, "0" * 64,
+                    source_kind="local_derivation" if cited[draft["citation"]].get("document_type") == "method_note"
+                    else "paper_note"))
             except ValueError:
                 reason = "CARD_INVALID"
         if reason:
@@ -164,6 +265,8 @@ def check_proposals(response, campaign, notes):
         valid.append(draft)
         rows.append({"id": hid, "status": "PROPOSED", "citation": draft["citation"],
                      "signal": draft["signal"], "lookback": draft["lookback"]})
+        if cited[draft["citation"]].get("document_type") == "method_note":
+            rows[-1]["citation_type"] = "method_note"
     return rows, valid
 
 
@@ -173,16 +276,24 @@ def freeze(run, draft, campaign, base_contract, prices_raw, note):
     contract = dict(base_contract, experiment=dict(experiment, lookback=draft["lookback"],
                                                    candidates=[draft["signal"]]))
     note_raw = note["document"].encode("utf-8")
-    card = card_for(draft, campaign, experiment, sha256_bytes(note_raw))
+    shared = note.get("document_type") == "method_note"
+    provenance = source_record(note) if shared else None
+    card = card_for(draft, campaign, experiment, sha256_bytes(note_raw),
+                    source_kind="local_derivation" if shared else "paper_note")
     method_contract.validate_card(card)
+    card_raw = canonical_json_bytes(card)
+    if len(card_raw) > 64 * 1024:
+        raise ValueError("card exceeds 64 KiB")
     store = reserve(run / "cards", draft["id"])
     if store is None:
         raise FileExistsError("card already frozen: " + draft["id"])
-    files = {"card.json": canonical_json_bytes(card), "source-0.md": note_raw,
+    files = {"card.json": card_raw, "source-0.md": note_raw,
              "raw-prices.csv": prices_raw, "import-contract.json": canonical_json_bytes(contract)}
     records = [store.write_bytes(name, data) for name, data in files.items()]
     registration = {"schema": CARD_KIND, "files": {n: sha256_bytes(d) for n, d in files.items()},
                     "proposal_sha256": sha256_bytes(canonical_json_bytes(draft))}
+    if shared:
+        registration["source_provenance"] = provenance
     records.append(store.write_json("registration.json", registration))
     store.commit_manifest(records, {"kind": CARD_KIND})
     return card
@@ -264,11 +375,11 @@ def passes_validation(decision):
     return decision is not None and decision["split_status"]["validation"] == "SUPPORTS_RULE"
 
 
-def critic_evidence(card, outcome, campaign):
+def critic_evidence(card, outcome, campaign, *, native_critic=False, note_text=None):
     # No paths, clocks or code hashes: the evidence, and so the prompt, must be
     # reproducible for the replay cache to bind to it. Test metrics stay out:
     # the test split belongs to the final gate.
-    return canonical_json_bytes({
+    evidence = {
         "data_label": campaign["data_label"],
         "availability": outcome["data_source"]["availability_status"],
         "data_warnings": outcome["data_source"]["warnings"],
@@ -277,22 +388,49 @@ def critic_evidence(card, outcome, campaign):
         "frozen_rule": card["decision"],
         "result": {"validation_status": outcome["decision"]["split_status"]["validation"],
                    "validation_metrics": outcome["decision"]["metrics"]["validation"]},
-    })
+    }
+    if native_critic:
+        if not isinstance(note_text, str) or sha256_bytes(note_text.encode()) != card["sources"][0]["sha256"]:
+            raise ValueError("native critic requires the exact frozen method note")
+        evidence["critic_policy"] = dict(NATIVE_CRITIC_POLICY)
+        evidence["method_note"] = {"source": card["sources"][0], "text": note_text}
+    return canonical_json_bytes(evidence)
 
 
-def critique(run, run_id, card, outcome, campaign, provider, receipt_keys, now):
+def critique(run, run_id, card, outcome, campaign, provider, receipt_keys, now, *, shared_note=False,
+             native_critic=False):
     workspace = run / "critic"
     relative = f"evidence/{card['id']}.json"
     (workspace / "evidence").mkdir(parents=True, exist_ok=True)
-    (workspace / relative).write_bytes(critic_evidence(card, outcome, campaign))
+    note_text = read_input(card_dir(run, card["id"]) / "source-0.md", MAX_INPUT).decode() if native_critic else None
+    (workspace / relative).write_bytes(critic_evidence(card, outcome, campaign, native_critic=native_critic,
+                                                     note_text=note_text))
     order = codex_broker.prepare_work_order(
         workspace, task_id="critic-" + card["id"], run_id=run_id, task_kind="ADVERSARIAL_CRITIC",
         input_path=relative, allowed_paths=[relative], expires_at=now + timedelta(hours=1), now=now)
     (workspace / "orders").mkdir(exist_ok=True)
     (workspace / "orders" / f"{card['id']}.json").write_bytes(canonical_json_bytes(order))
+    if native_critic:
+        # No provider adapter: the existing fixed, bounded subprocess boundary owns execution.
+        result = codex_broker.run_work_order(
+            order, workspace, "outbox", enabled=True, now=now, receipt_key_root=receipt_keys)
+        return critic_verdict(result)
+    key = f"critic:{run_id}:{card['id']}"
+    transport = broker_runner(provider, key)
+
+    def runner(*args, **kwargs):
+        try:
+            return transport(*args, **kwargs)
+        except ReplayMiss as exc:
+            # Only an absent offline shared-note critic becomes a signed broker
+            # failure. Stale prompts and live failures retain their abort policy.
+            if shared_note and isinstance(provider, ReplayProvider) and key not in provider.entries:
+                raise RuntimeError("recorded critic unavailable: " + key) from exc
+            raise
+
     result = codex_broker.run_work_order(
         order, workspace, "outbox", enabled=True, now=now, receipt_key_root=receipt_keys,
-        runner=broker_runner(provider, f"critic:{run_id}:{card['id']}"))
+        runner=runner)
     return critic_verdict(result)
 
 
@@ -323,13 +461,31 @@ def counts_for(rows, decisions=None):
     return c
 
 
+def _check_native_prices(raw):
+    # A caller's SYNTHETIC label is not proof. This pilot admits only the
+    # independently regenerated bounded control used by the captured proposal.
+    with tempfile.TemporaryDirectory(prefix="quantos-native-control-") as temporary:
+        folder = Path(temporary) / "fixture"
+        make_fixture(folder, assets=8, dates=60, persistent=True)
+        if raw != (folder / "panel.csv").read_bytes():
+            raise ValueError("native critic prices must equal the 8-asset, 60-date synthetic control")
+
+
 def run_loop(campaign_path, prices_path, contract_path, vault, store, run_id, provider,
-             receipt_keys=None, now=None):
+             receipt_keys=None, now=None, *, shared_root=None, manifest_sha256=None, note_ids=None,
+             native_critic=False):
     now = now or datetime.now(timezone.utc)
     method_contract.safe_id(run_id)
     campaign_raw = read_input(Path(campaign_path), 64 * 1024)
     campaign = read_campaign(campaign_raw)
+    if type(native_critic) is not bool:
+        raise ValueError("native_critic must be boolean")
+    if native_critic and (type(provider) is not ReplayProvider or shared_root is None
+                          or campaign["data_label"] != "SYNTHETIC" or campaign["k"] != 1):
+        raise ValueError("native critic requires one synthetic candidate, a pinned shared note and replay-only proposals")
     prices_raw = read_input(Path(prices_path), MAX_INPUT)
+    if native_critic:
+        _check_native_prices(prices_raw)
     contract_raw = read_input(Path(contract_path), 64 * 1024)
     base_contract = strict_json(contract_raw)
     experiment = base_contract["experiment"]
@@ -338,33 +494,39 @@ def run_loop(campaign_path, prices_path, contract_path, vault, store, run_id, pr
         raise FileExistsError(f"run {run_id} exists; runs are never overwritten")
     # Retrieval and the proposer run before the directory exists, so their
     # failures leave nothing behind.
-    retrieved = query_note_sources(NoteIndex(vault), campaign["retrieval"]["query"],
-                                   campaign["retrieval"]["n_results"], source_root=vault)
-    notes = retrieved["matches"]
+    notes = select_sources(campaign, vault, shared_root=shared_root,
+                           manifest_sha256=manifest_sha256, note_ids=note_ids)
     prompt = propose_prompt(campaign, experiment, notes)
     response = provider.complete("propose", prompt)
     run.mkdir(parents=True)
     try:
         return _run_stages(run, run_id, campaign, campaign_raw, prices_raw, contract_raw, base_contract,
-                           notes, prompt, response, provider, receipt_keys, now)
+                           notes, prompt, response, provider, receipt_keys, now, native_critic=native_critic)
     except BaseException:
         # A run that stops midway (critic transport, disk, interrupt) is removed
         # rather than left looking like evidence; the caller sees the error.
-        shutil.rmtree(run)
+        # A native attempt instead reserves its id: an interrupt must not enable a second call.
+        if not native_critic:
+            shutil.rmtree(run)
         raise
 
 
 def _run_stages(run, run_id, campaign, campaign_raw, prices_raw, contract_raw, base_contract,
-                notes, prompt, response, provider, receipt_keys, now):
+                notes, prompt, response, provider, receipt_keys, now, *, native_critic=False):
     experiment = base_contract["experiment"]
     (run / "propose").mkdir()
     (run / "propose/prompt.json").write_bytes(prompt)
     (run / "propose/response.txt").write_text(response, encoding="utf-8")
+    if notes and notes[0].get("document_type") == "method_note":
+        (run / "propose/campaign.json").write_bytes(campaign_raw)
+        (run / "propose/import-contract.json").write_bytes(contract_raw)
     rows, drafts = check_proposals(response, campaign, notes)
+    if native_critic and len(drafts) > 1:
+        raise ValueError("native critic admits at most one candidate")
     log("propose", proposed=len(rows), invalid=len(rows) - len(drafts), retrieved=len(notes))
 
     by_id = {r["id"]: r for r in rows if r["status"] == "PROPOSED"}
-    note_for = {n["metadata"]["arxiv_id"]: n for n in notes}
+    note_for = {note_id(n): n for n in notes}
     # freeze every card before the first test runs
     for draft in drafts:
         card = freeze(run, draft, campaign, base_contract, prices_raw, note_for[draft["citation"]])
@@ -386,10 +548,12 @@ def _run_stages(run, run_id, campaign, campaign_raw, prices_raw, contract_raw, b
     log("test", tested=len(drafts), failed_on_validation=len(drafts) - len(tested))
 
     for hid, (card, outcome) in tested.items():
-        verdict = critique(run, run_id, card, outcome, campaign, provider, receipt_keys, now)
+        verdict = critique(run, run_id, card, outcome, campaign, provider, receipt_keys, now,
+                           shared_note=note_for[card["sources"][0]["id"]].get("document_type") == "method_note",
+                           native_critic=native_critic)
         by_id[hid]["critic"] = verdict
         by_id[hid]["status"] = VERDICT_STATUS[verdict["verdict"]]
-        if by_id[hid]["status"] == "AWAITING_HUMAN":
+        if by_id[hid]["status"] == "AWAITING_HUMAN" and not native_critic:
             by_id[hid]["decision"] = open_test(run, hid, outcome["decision"])
     c = counts_for(rows)
     log("critique", critiqued=len(tested), rejected_by_critic=c["rejected_by_critic"],
@@ -400,14 +564,19 @@ def _run_stages(run, run_id, campaign, campaign_raw, prices_raw, contract_raw, b
         "data_label": campaign["data_label"],
         "inputs": {"campaign_sha256": sha256_bytes(campaign_raw), "prices_sha256": sha256_bytes(prices_raw),
                    "contract_sha256": sha256_bytes(contract_raw),
-                   "retrieved": [{"id": n["metadata"]["arxiv_id"], "sha256": n["metadata"]["source_sha256"]}
-                                 for n in notes]},
+                   "retrieved": [source_record(n) for n in notes]},
         "provider": {"name": provider.name, "provenance": provider.provenance,
                      "propose_prompt_sha256": prompt_sha256(prompt),
                      "propose_response_sha256": sha256_bytes(response.encode("utf-8"))},
         "hypotheses": rows,
         "counts": c,
     }
+    if notes and notes[0].get("document_type") == "method_note":
+        ledger["inputs"]["source_selection"] = {"kind": "shared_manifest",
+                                               "manifest_sha256": notes[0]["manifest_sha256"],
+                                               "document_ids": [note_id(n) for n in notes]}
+    if native_critic:
+        ledger["critic_mode"] = "native_codex"
     ledger_raw = canonical_json_bytes(ledger)
     (run / "ledger.json").write_bytes(ledger_raw)
     (run / "REPORT.md").write_text(render(ledger), encoding="utf-8")
@@ -436,6 +605,7 @@ def envelope(ledger, ledger_sha256, cutoff):
     confidence["C_repro"] = {**unavailable, "status": "pass", "evidence_refs": ["ledger.json"],
                              "rubric": "Each trial was recomputed from its frozen card before the ledger was written."}
     valid = [r["id"] for r in ledger["hypotheses"] if "card_sha256" in r]
+    native_critic = ledger.get("critic_mode") == "native_codex"
     return {
         "schema_version": "1.0",
         "task_id": "loop:" + ledger["run_id"],
@@ -454,7 +624,8 @@ def envelope(ledger, ledger_sha256, cutoff):
         "contracts": {"experiment": method_contract.FACTOR_METHOD,
                       "decision": (f"mean rank IC >= {ledger['campaign']['rule']['min_rank_ic']} and net mean > "
                                    f"{ledger['campaign']['rule']['min_net_mean']} on validation; test is shown "
-                                   "only at the human gate"),
+                                   + ("only at the human gate" if not native_critic else
+                                      "nowhere in this bounded native run; it remains sealed")),
                       **({"hypothesis": valid} if valid else {})},
         "run_state_before": "REPORT_READY",
         "requested_state": "NONE",
@@ -489,6 +660,8 @@ def read_ledger(run):
     ledger = strict_json(read_input(Path(run) / "ledger.json", MAX_INPUT))
     if not isinstance(ledger, dict) or ledger.get("schema") != LEDGER_SCHEMA:
         raise ValueError(f"ledger must be {LEDGER_SCHEMA}")
+    if "critic_mode" in ledger and ledger["critic_mode"] != "native_codex":
+        raise ValueError("unknown critic mode")
     return ledger
 
 
@@ -513,6 +686,8 @@ def decide(run, hid, decision, note=""):
     """Record one human decision; only a hypothesis that passed the validation rule and the critic qualifies."""
     run = Path(run)
     ledger = read_ledger(run)
+    if ledger.get("critic_mode") == "native_codex" and decision == "PROMOTED":
+        raise ValueError("native critic holdout is sealed; promotion is unavailable for this bounded run")
     row = next((r for r in ledger["hypotheses"] if r["id"] == hid), None)
     if row is None or row["status"] != "AWAITING_HUMAN":
         raise ValueError(f"{hid} is not awaiting a human decision")
@@ -529,6 +704,8 @@ def decide(run, hid, decision, note=""):
 
 def gate(run, promote=(), reject=(), ask=None):
     run = Path(run)
+    if ask is not None and read_ledger(run).get("critic_mode") == "native_codex":
+        raise ValueError("native critic holdout is sealed; use status or explicit --reject instead of the interactive gate")
     for hid in promote:
         decide(run, hid, "PROMOTED")
     for hid in reject:
@@ -549,6 +726,106 @@ def status(run):
     return {"run_id": ledger["run_id"], "data_label": ledger["data_label"], "counts": counts}
 
 
+def _verify_shared_sources(run, ledger):
+    """Bind typed retrieval to prompt, raw proposal, frozen source and registration.
+
+    Verification uses the admitted snapshots, not today's shared corpus. These
+    local hashes detect drift; they do not authenticate an owner rewriting all artifacts.
+    """
+    prompt_raw = read_input(run / "propose/prompt.json", MAX_INPUT)
+    prompt = strict_json(prompt_raw)
+    if not isinstance(prompt, dict):
+        raise ValueError("proposal prompt must be an object")
+    selected = ledger["inputs"].get("source_selection")
+    prompt_notes = prompt.get("notes", [])
+    if not isinstance(prompt_notes, list) or any(not isinstance(n, dict) for n in prompt_notes):
+        raise ValueError("proposal notes must be objects")
+    frozen_shared = False
+    for row in ledger["hypotheses"]:
+        if "card_sha256" in row:
+            method_contract.safe_id(row["id"])
+            registration = strict_json(read_input(card_dir(run, row["id"]) / "registration.json", MAX_INPUT))
+            if not isinstance(registration, dict):
+                raise ValueError("frozen registration must be an object")
+            frozen_shared |= "source_provenance" in registration
+    if selected is None and not any(n.get("document_type") == "method_note" for n in prompt_notes) \
+            and not any("document_type" in n for n in ledger["inputs"]["retrieved"]) and not frozen_shared:
+        return
+    if not isinstance(selected, dict) or set(selected) != {"kind", "manifest_sha256", "document_ids"} \
+            or selected["kind"] != "shared_manifest" or not isinstance(prompt_notes, list) \
+            or not 1 <= len(prompt_notes) <= 8:
+        raise ValueError("shared source selection is missing or invalid")
+    notes = []
+    for source in prompt_notes:
+        try:
+            note = {"document_id": source["id"], "document": source["text"],
+                    **{k: source[k] for k in ("document_type", "title", "source_sha256",
+                                             "manifest_sha256", "source_refs", "rights")}}
+            _shared_citation(note)
+            if prompt_source(note) != source or note["manifest_sha256"] != selected["manifest_sha256"]:
+                raise ValueError("shared prompt source differs from selection")
+        except (KeyError, TypeError) as exc:
+            raise ValueError("incomplete shared prompt source") from exc
+        notes.append(note)
+    ids = [note_id(n) for n in notes]
+    if ids != selected["document_ids"] or len(set(ids)) != len(ids) \
+            or ledger["inputs"]["retrieved"] != [source_record(n) for n in notes]:
+        raise ValueError("ledger shared provenance differs from the proposal prompt")
+    campaign = read_campaign(canonical_json_bytes(ledger["campaign"]))
+    campaign_raw = read_input(run / "propose/campaign.json", 64 * 1024)
+    contract_raw = read_input(run / "propose/import-contract.json", 64 * 1024)
+    if sha256_bytes(campaign_raw) != ledger["inputs"]["campaign_sha256"] \
+            or read_campaign(campaign_raw) != campaign \
+            or sha256_bytes(contract_raw) != ledger["inputs"]["contract_sha256"]:
+        raise ValueError("source snapshots differ from admitted inputs")
+    base_contract = strict_json(contract_raw)
+    fixed = prompt["fixed_by_campaign"]
+    experiment = {"splits": fixed["splits"], "cost_bps": fixed["cost_bps"]}
+    if prompt_raw != propose_prompt(campaign, experiment, notes) \
+            or sha256_bytes(prompt_raw) != ledger["provider"]["propose_prompt_sha256"]:
+        raise ValueError("shared proposal prompt differs from its recorded identity")
+    response_raw = read_input(run / "propose/response.txt", MAX_INPUT)
+    if sha256_bytes(response_raw) != ledger["provider"]["propose_response_sha256"]:
+        raise ValueError("shared proposal response differs from its recorded identity")
+    expected_rows, drafts = check_proposals(response_raw.decode("utf-8"), campaign, notes)
+    if len(expected_rows) != len(ledger["hypotheses"]):
+        raise ValueError("shared proposal rows differ from the ledger")
+    for expected, row in zip(expected_rows, ledger["hypotheses"], strict=True):
+        if expected["status"] == "INVALID":
+            if row != expected:
+                raise ValueError("invalid shared proposal differs from the ledger")
+        elif "card_sha256" not in row or any(row.get(k) != v for k, v in expected.items() if k != "status"):
+            raise ValueError("shared proposal citation differs from the ledger")
+    sources = {note_id(n): n for n in notes}
+    for draft in drafts:
+        folder = card_dir(run, draft["id"])
+        checked_bundle(folder, CARD_FILES, CARD_KIND)
+        files = {name: read_input(folder / name, MAX_INPUT) for name in CARD_FILES - {"registration.json"}}
+        source = sources[draft["citation"]]
+        provenance = source_record(source)
+        registration = strict_json(read_input(folder / "registration.json", MAX_INPUT))
+        expected = {"schema": CARD_KIND, "files": {n: sha256_bytes(raw) for n, raw in files.items()},
+                    "proposal_sha256": sha256_bytes(canonical_json_bytes(draft)), "source_provenance": provenance}
+        if registration != expected or files["source-0.md"] != source["document"].encode("utf-8"):
+            raise ValueError("frozen shared source provenance differs from its prompt or registration")
+        contract = strict_json(files["import-contract.json"])
+        if contract["experiment"]["lookback"] != draft["lookback"] \
+                or contract["experiment"]["candidates"] != [draft["signal"]] \
+                or contract["experiment"]["horizon"] != fixed["horizon_intervals"]:
+            raise ValueError("frozen execution parameters differ from the proposal or prompt")
+        expected_contract = dict(base_contract, experiment=dict(base_contract["experiment"],
+                                 lookback=draft["lookback"], candidates=[draft["signal"]]))
+        if sha256_bytes(files["raw-prices.csv"]) != ledger["inputs"]["prices_sha256"] \
+                or contract != expected_contract:
+            raise ValueError("frozen files differ from admitted inputs")
+        card = method_contract.validate_card(strict_json(read_input(folder / "card.json", 64 * 1024)))
+        expected_card = card_for(draft, campaign, contract["experiment"], provenance["source_sha256"],
+                                 source_kind="local_derivation")
+        if card != expected_card or any(contract["experiment"][k] != experiment[k] for k in experiment):
+            raise ValueError("frozen shared card differs from the source-bound proposal")
+        method_contract.read_sources(card, folder, frozen=True)
+
+
 def verify(run, receipt_keys=None):
     """Rebuild every row's status from frozen cards, recomputed trials and signed critic results.
 
@@ -559,7 +836,10 @@ def verify(run, receipt_keys=None):
     """
     run = Path(run)
     ledger = read_ledger(run)
-    survivors = {r["id"] for r in ledger["hypotheses"] if r["status"] == "AWAITING_HUMAN"}
+    _verify_shared_sources(run, ledger)
+    native_critic = ledger.get("critic_mode") == "native_codex"
+    survivors = {r["id"] for r in ledger["hypotheses"]
+                 if r["status"] == "AWAITING_HUMAN" and not native_critic}
     gate = run / "gate"
     for part in ("trials", "prepared", "outcomes"):
         found = {p.name.removesuffix(".json") if part == "outcomes" else p.name
@@ -572,6 +852,8 @@ def verify(run, receipt_keys=None):
         if row["status"] != _verified_status(run, ledger, row, receipt_keys):
             raise ValueError(f"{row['id']}: ledger status {row['status']} is not what the evidence gives")
     decisions = read_decisions(run)
+    if native_critic and "PROMOTED" in decisions.values():
+        raise ValueError("native critic holdout is sealed; a promotion record is forbidden")
     awaiting = {r["id"] for r in ledger["hypotheses"] if r["status"] == "AWAITING_HUMAN"}
     if not set(decisions) <= awaiting:
         raise ValueError("a human decision exists for a hypothesis that did not pass the validation rule and the critic")
@@ -579,7 +861,23 @@ def verify(run, receipt_keys=None):
         raise ValueError("ledger counts differ from its rows")
     if read_input(run / "REPORT.md", MAX_INPUT) != render(ledger).encode("utf-8"):
         raise ValueError("REPORT.md is not the rendering of the verified ledger")
+    verify_envelope(run, ledger)
     return {"verified": True, **status(run)}
+
+
+def verify_envelope(run, ledger):
+    """Bind reviewer-facing evidence to the same verified run as the Markdown."""
+    prompt_raw = read_input(run / "propose/prompt.json", MAX_INPUT)
+    if prompt_sha256(prompt_raw) != ledger["provider"]["propose_prompt_sha256"]:
+        raise ValueError("proposal prompt differs from its recorded identity")
+    prompt = strict_json(prompt_raw)
+    cutoff = iso_utc(prompt["fixed_by_campaign"]["splits"]["test"]["end"])
+    expected = envelope(ledger, sha256_bytes(read_input(run / "ledger.json", MAX_INPUT)), cutoff)
+    evidence_path = run / "envelope.json"
+    if not evidence_path.exists():
+        raise FileNotFoundError(f"Missing evidence envelope: {evidence_path}")
+    if read_input(evidence_path, MAX_INPUT) != canonical_json_bytes(expected):
+        raise ValueError("envelope.json is not the evidence of the verified ledger")
 
 
 def _check_outcome(path, expected):
@@ -602,6 +900,8 @@ def _verified_status(run, ledger, row, receipt_keys):
     if sha256_bytes(canonical_json_bytes(card)) != row["card_sha256"]:
         raise ValueError(f"{hid}: frozen card differs from the ledger")
     frozen = {name: (folder / name).read_bytes() for name in ("raw-prices.csv", "import-contract.json")}
+    if ledger.get("critic_mode") == "native_codex":
+        _check_native_prices(frozen["raw-prices.csv"])
     sealed_input = dict(frozen, **{"raw-prices.csv": sealed_prices(frozen["raw-prices.csv"],
                                                                      strict_json(frozen["import-contract.json"]))})
     outcome_file = run / "outcomes" / f"{hid}.json"
@@ -622,7 +922,8 @@ def _verified_status(run, ledger, row, receipt_keys):
     _check_outcome(outcome_file, {"execution": "COMPLETED", "decision": decision, "data_source": report["data_source"]})
     if row.get("outcome") != "COMPLETED":
         raise ValueError(f"{hid}: ledger outcome differs from the recomputed trial")
-    if row["status"] != "AWAITING_HUMAN" and decision != row["decision"]:
+    native_critic = ledger.get("critic_mode") == "native_codex"
+    if (row["status"] != "AWAITING_HUMAN" or native_critic) and decision != row["decision"]:
         raise ValueError(f"{hid}: ledger metrics differ from the recomputed trial")
     if not passes_validation(decision):
         if "critic" in row:
@@ -633,7 +934,8 @@ def _verified_status(run, ledger, row, receipt_keys):
     workspace = run / "critic"
     order = strict_json(read_input(workspace / "orders" / f"{hid}.json", 64 * 1024))
     evidence = critic_evidence(card, {"decision": decision, "data_source": report["data_source"]},
-                               ledger["campaign"])
+                               ledger["campaign"], native_critic=native_critic,
+                               note_text=read_input(folder / "source-0.md", MAX_INPUT).decode() if native_critic else None)
     if order["input"]["sha256"] != sha256_bytes(evidence) or order["task_id"] != "critic-" + hid:
         raise ValueError(f"{hid}: critic work order is not bound to this card's recomputed evidence")
     outbox = workspace / "outbox" / ledger["run_id"]
@@ -645,7 +947,7 @@ def _verified_status(run, ledger, row, receipt_keys):
     if verdict != row["critic"]:
         raise ValueError(f"{hid}: critic verdict differs from its signed result")
     status = VERDICT_STATUS[verdict["verdict"]]
-    if status == "AWAITING_HUMAN":
+    if status == "AWAITING_HUMAN" and not native_critic:
         trial, report = _verified_trial(run / "gate", hid, frozen)
         full = method_contract.evaluate_card(card, report) if trial["status"] == "SUCCESS" else None
         if full is None or full["metrics"]["validation"] != decision["metrics"]["validation"] or full != row["decision"]:
@@ -680,7 +982,10 @@ def render(ledger):
         "| stage | count |", "|---|---|",
     ]
     lines += [f"| {k.replace('_', ' ')} | {c[k]} |" for k in COUNTS]
-    lines += ["", "Promotion happens only through `quantos-loop gate`; run `quantos-loop status` for current counts.",
+    policy = ("Native critic verification run: test remains sealed and promotion is unavailable."
+              if ledger.get("critic_mode") == "native_codex" else
+              "Promotion happens only through `quantos-loop gate`; run `quantos-loop status` for current counts.")
+    lines += ["", policy,
               "", "| id | signal | lookback | cites | validation IC | test IC | test net mean | status | reason |",
               "|---|---|---|---|---|---|---|---|---|"]
     for r in ledger["hypotheses"]:
@@ -697,7 +1002,9 @@ def render(ledger):
     lines += ["", f"Rule fixed by the campaign before proposals, applied to validation only before the critic: "
               f"mean rank IC >= {rule['min_rank_ic']} and mean net-of-cost sleeve P&L per interval > "
               f"{rule['min_net_mean']}, on at least {rule['min_valid_dates']} valid dates. Test is computed only "
-              "for hypotheses that reach the human gate; for the rest it stays sealed. The critic never sees it.",
+              + ("for hypotheses that reach the human gate; for the rest it stays sealed. The critic never sees it."
+               if ledger.get("critic_mode") != "native_codex" else
+               "for the legacy human gate; this native critic run keeps it sealed regardless of the verdict."),
               "No significance test or multiple-testing correction is applied; costs are the frozen flat bps only.", ""]
     return "\n".join(lines)
 
@@ -709,14 +1016,15 @@ def provider_for(args):
     return ReplayProvider(args.replay)
 
 
-def propose_only(campaign_path, experiment_path, vault, provider):
+def propose_only(campaign_path, experiment_path, vault, provider, *, shared_root=None,
+                 manifest_sha256=None, note_ids=None):
     """Ask for and validate the proposals alone: no prices are read, so they can be
     recorded before the data that will judge them exists. The prompt is the one
     run_loop builds, so the recorded answer replays there."""
     campaign = read_campaign(read_input(Path(campaign_path), 64 * 1024))
     experiment = strict_json(read_input(Path(experiment_path), 64 * 1024))
-    notes = query_note_sources(NoteIndex(vault), campaign["retrieval"]["query"],
-                               campaign["retrieval"]["n_results"], source_root=vault)["matches"]
+    notes = select_sources(campaign, vault, shared_root=shared_root,
+                           manifest_sha256=manifest_sha256, note_ids=note_ids)
     prompt = propose_prompt(campaign, experiment, notes)
     rows, valid = check_proposals(provider.complete("propose", prompt), campaign, notes)
     log("propose", proposed=len(rows), invalid=len(rows) - len(valid), retrieved=len(notes))
@@ -737,18 +1045,25 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
     run = commands.add_parser("run", help="propose, freeze, test and critique")
-    for flag in ("--campaign", "--prices", "--contract", "--vault", "--store", "--run-id"):
+    for flag in ("--campaign", "--prices", "--contract", "--store", "--run-id"):
         run.add_argument(flag, required=True)
     propose = commands.add_parser("propose", help="record the proposals alone, before any price exists")
-    for flag in ("--campaign", "--experiment", "--vault"):
+    for flag in ("--campaign", "--experiment"):
         propose.add_argument(flag, required=True)
     for sub in (run, propose):
+        sources = sub.add_mutually_exclusive_group(required=True)
+        sources.add_argument("--vault", help="legacy paper-note directory")
+        sources.add_argument("--shared-root", help="canonical quant-shared-notes/v1 directory")
+        sub.add_argument("--manifest-sha256", help="required pinned manifest digest with --shared-root")
+        sub.add_argument("--note-id", action="append", help="with --shared-root: select 1..8 distinct ids, each at most 64 characters")
         sub.add_argument("--replay", help="replay-cache file (offline); with --live, replayed keys first")
         sub.add_argument("--live", action="store_true", help="call the pinned model on OpenRouter, key from OPENROUTER_API_KEY (for keys not replayed)")
         sub.add_argument("--record", help="with --live: write the session to this new replay file")
         sub.add_argument("--model", help="with --live: the OpenRouter model id (default qwen/qwen3.8-27b:free; recorded in the provenance)")
         sub.add_argument("--max-calls", type=int, help="with --live: hard budget on live call attempts, failed ones included")
     run.add_argument("--receipt-keys", help="critic receipt key directory (default: qrae's per-user store)")
+    run.add_argument("--native-critic", action="store_true",
+                     help="opt in to one fixed-broker Codex critic for one synthetic shared-note replay; holdout stays sealed")
     gate_cmd = commands.add_parser("gate", help="human decision: promote or reject hypotheses awaiting review")
     gate_cmd.add_argument("--run", required=True)
     gate_cmd.add_argument("--promote", nargs="*", default=[])
@@ -761,16 +1076,21 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command in ("run", "propose"):
+            if args.command == "run" and args.native_critic and args.live:
+                raise ValueError("native critic requires replay-only proposals; --live is incompatible")
             if not (args.replay or args.live):
                 raise ValueError("give --replay, --live, or both")
             if (args.record or args.model or args.max_calls is not None) and not args.live:
                 raise ValueError("--record, --model and --max-calls need --live")
             provider = provider_for(args)
+            selection = {"shared_root": args.shared_root, "manifest_sha256": args.manifest_sha256,
+                         "note_ids": args.note_id}
             if args.command == "propose":
-                result = propose_only(args.campaign, args.experiment, args.vault, provider)
+                result = propose_only(args.campaign, args.experiment, args.vault, provider, **selection)
             else:
                 ledger = run_loop(args.campaign, args.prices, args.contract, args.vault, args.store,
-                                  args.run_id, provider, receipt_keys=args.receipt_keys)
+                                  args.run_id, provider, receipt_keys=args.receipt_keys,
+                                  native_critic=args.native_critic, **selection)
                 result = {"run": str(Path(args.store) / args.run_id), "counts": ledger["counts"]}
             # Only a session that finished is written: a failed one labelled "REAL LLM OUTPUT"
             # would be refused as already recorded on the rerun and then committed as is.

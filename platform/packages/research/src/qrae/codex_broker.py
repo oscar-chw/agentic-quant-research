@@ -16,10 +16,12 @@ import os
 import re
 import secrets
 import shutil
+import signal
 import stat
 import subprocess
 import tempfile
 import threading
+import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
@@ -847,8 +849,10 @@ def _bounded_subprocess_run(
     env: Mapping[str, str],
     max_output_bytes: int,
 ) -> subprocess.CompletedProcess[bytes]:
-    """Run without buffering more than the declared stdout limit plus one byte."""
+    """Bound process, pipe waits and forced cleanup by one total deadline."""
 
+    deadline = time.monotonic() + timeout
+    execution_deadline = deadline - min(1.0, timeout / 10)
     process = subprocess.Popen(
         command,
         stdin=subprocess.PIPE,
@@ -857,10 +861,21 @@ def _bounded_subprocess_run(
         cwd=cwd,
         shell=False,
         env=dict(env),
+        start_new_session=os.name != "nt",
     )
     output = bytearray()
     output_exceeded = threading.Event()
     reader_errors: list[Exception] = []
+
+    def terminate() -> None:
+        try:
+            if os.name == "nt":
+                process.kill()
+            else:
+                # Only this freshly created session, including children holding its pipes.
+                os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
 
     def write_stdin() -> None:
         try:
@@ -885,17 +900,11 @@ def _bounded_subprocess_run(
                     output.extend(chunk[:remaining])
                 if len(output) > max_output_bytes:
                     output_exceeded.set()
-                    try:
-                        process.kill()
-                    except OSError:
-                        pass
+                    terminate()
                     break
         except (OSError, RuntimeError, ValueError) as exc:  # pragma: no cover
             reader_errors.append(exc)
-            try:
-                process.kill()
-            except OSError:
-                pass
+            terminate()
         finally:
             if process.stdout is not None:
                 process.stdout.close()
@@ -905,18 +914,31 @@ def _bounded_subprocess_run(
     writer.start()
     reader.start()
     timed_out = False
+
+    def remaining(end: float) -> float:
+        return max(0.0, end - time.monotonic())
+
+    def cleanup() -> None:
+        # A completed parent can still have descendants holding its stdout pipe.
+        terminate()
+        process.wait(timeout=remaining(deadline))
+        for thread in (writer, reader):
+            thread.join(timeout=remaining(deadline))
+        if writer.is_alive() or reader.is_alive():
+            raise RuntimeError("child pipes did not close after bounded cleanup")
+
     try:
-        process.wait(timeout=timeout)
+        process.wait(timeout=remaining(execution_deadline))
+        for thread in (writer, reader):
+            thread.join(timeout=remaining(execution_deadline))
+            if thread.is_alive():
+                raise subprocess.TimeoutExpired(command, timeout)
     except subprocess.TimeoutExpired:
         timed_out = True
-        try:
-            process.kill()
-        except OSError:
-            pass
-        process.wait()
-    finally:
-        writer.join()
-        reader.join()
+        cleanup()
+    except BaseException:
+        cleanup()
+        raise
 
     if output_exceeded.is_set():
         raise CodexOutputTooLarge("Codex stdout exceeded its fixed byte budget")

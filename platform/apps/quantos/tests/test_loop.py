@@ -332,6 +332,43 @@ def test_test_numbers_written_into_the_report_are_refused(panels):
         loop.verify(folder, receipt_keys=panels / "keys")
 
 
+@pytest.mark.parametrize("field,value", [
+    ("decision", "PROMOTE"),
+    ("evidence_tier", "E5"),
+    ("facts", ["This run establishes a profitable strategy."]),
+    ("input_artifacts", []),
+])
+def test_machine_evidence_must_match_verified_ledger(panels, field, value):
+    folder = sealed_run(panels)
+    assert loop.verify(folder, receipt_keys=panels / "keys")["verified"]
+    path = folder / "envelope.json"
+    original = path.read_bytes()
+    evidence = json.loads(original)
+    evidence[field] = value
+    path.write_bytes(loop.canonical_json_bytes(evidence))
+    with pytest.raises(ValueError, match="envelope.json"):
+        loop.verify(folder, receipt_keys=panels / "keys")
+    path.write_bytes(original)
+    assert loop.verify(folder, receipt_keys=panels / "keys")["verified"]
+
+
+def test_machine_evidence_is_required(panels):
+    folder = sealed_run(panels)
+    (folder / "envelope.json").unlink()
+    with pytest.raises(OSError, match="envelope.json"):
+        loop.verify(folder, receipt_keys=panels / "keys")
+
+
+def test_machine_evidence_cutoff_is_bound_to_recorded_prompt(panels):
+    folder = sealed_run(panels)
+    prompt = folder / "propose/prompt.json"
+    content = json.loads(prompt.read_bytes())
+    content["fixed_by_campaign"]["splits"]["test"]["end"] = "2099-01-01T00:00:00Z"
+    prompt.write_bytes(loop.canonical_json_bytes(content))
+    with pytest.raises(ValueError, match="prompt"):
+        loop.verify(folder, receipt_keys=panels / "keys")
+
+
 @pytest.mark.parametrize("forge", [
     lambda r: r | {"decision": "SHIPPED"},
     lambda r: r | {"hypothesis": "H3"},

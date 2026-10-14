@@ -23,11 +23,11 @@ flowchart TB
 
 | H | Card | Dies | Stopped by |
 |---|---|---|---|
-| H5 | momentum-2, cites Asness–Moskowitz–Pedersen 2013 | invalid | [`reason = "CITATION_NOT_RETRIEVED"`, loop.py:146](../apps/quantos/src/quantos_showcase/loop.py#L146) in [`def check_proposals`, loop.py:126](../apps/quantos/src/quantos_showcase/loop.py#L126) |
-| H2 | reversal-1, cites Jegadeesh 1990 | failed on validation | [`def passes_validation`, loop.py:262](../apps/quantos/src/quantos_showcase/loop.py#L262), applied at [`"TESTED" if passed else "FAILED_ON_VALIDATION"`, loop.py:383](../apps/quantos/src/quantos_showcase/loop.py#L383) |
+| H5 | momentum-2, cites Asness–Moskowitz–Pedersen 2013 | invalid | [`reason = "CITATION_NOT_RETRIEVED"`, loop.py:245](../apps/quantos/src/quantos_showcase/loop.py#L245) in [`def check_proposals`, loop.py:225](../apps/quantos/src/quantos_showcase/loop.py#L225) |
+| H2 | reversal-1, cites Jegadeesh 1990 | failed on validation | [`def passes_validation`, loop.py:373](../apps/quantos/src/quantos_showcase/loop.py#L373), applied at [`"TESTED" if passed else "FAILED_ON_VALIDATION"`, loop.py:545](../apps/quantos/src/quantos_showcase/loop.py#L545) |
 | H4 | reversal-5, cites Lehmann 1990 | failed on validation | the same two lines |
-| H3 | momentum-3, cites Moskowitz–Ooi–Pedersen 2012 | rejected by the critic | [`def critic_verdict`, loop.py:299](../apps/quantos/src/quantos_showcase/loop.py#L299), mapped by [`VERDICT_STATUS`, loop.py:55](../apps/quantos/src/quantos_showcase/loop.py#L55) |
-| H1 | momentum-1, cites Jegadeesh–Titman 1993 | at the gate, on `regime` only | test computed by [`def open_test`, loop.py:251](../apps/quantos/src/quantos_showcase/loop.py#L251); decided by [`def decide`, loop.py:512](../apps/quantos/src/quantos_showcase/loop.py#L512), called by [`def gate`, loop.py:530](../apps/quantos/src/quantos_showcase/loop.py#L530) |
+| H3 | momentum-3, cites Moskowitz–Ooi–Pedersen 2012 | rejected by the critic | [`def critic_verdict`, loop.py:437](../apps/quantos/src/quantos_showcase/loop.py#L437), mapped by [`VERDICT_STATUS`, loop.py:73](../apps/quantos/src/quantos_showcase/loop.py#L73) |
+| H1 | momentum-1, cites Jegadeesh–Titman 1993 | at the gate, on `regime` only | test computed by [`def open_test`, loop.py:362](../apps/quantos/src/quantos_showcase/loop.py#L362); decided by [`def decide`, loop.py:685](../apps/quantos/src/quantos_showcase/loop.py#L685), called by [`def gate`, loop.py:705](../apps/quantos/src/quantos_showcase/loop.py#L705) |
 
 The counts are asserted in [test_loop.py](../apps/quantos/tests/test_loop.py)
 (`test_shipped_hand_written_replay_reproduces_both_campaigns`), and every line
@@ -50,7 +50,7 @@ its reason).
 The four valid drafts are frozen first: each card fixes signal, lookback, cost,
 splits and the comparison rule, hashed with the data, before any trial runs. The
 factor lab then prepares, runs and recomputes each trial on the frozen prices with
-the test split's rows withheld ([`def sealed_prices`, loop.py:195](../apps/quantos/src/quantos_showcase/loop.py#L195)),
+the test split's rows withheld ([`def sealed_prices`, loop.py:306](../apps/quantos/src/quantos_showcase/loop.py#L306)),
 so no test number exists for any card at this stage. The campaign's rule is
 mean rank IC ≥ 1/10 and a positive net-of-cost sleeve mean on at least 10 valid
 dates ([campaign.json](../apps/quantos/examples/loop/campaign.json)).
@@ -66,7 +66,7 @@ only place one is computed.
 
 H1 and H3 pass on validation and go to the adversarial critic. The critic sees
 validation evidence only: `critic_evidence` leaves the test metrics out
-([`def critic_evidence`, loop.py:267](../apps/quantos/src/quantos_showcase/loop.py#L267)). It answers
+([`def critic_evidence`, loop.py:378](../apps/quantos/src/quantos_showcase/loop.py#L378)). It answers
 through a fixed schema with no field for a number, and a reply with any extra field
 is quarantined. Here the hand-written critic answer (no model wrote it) says the cited note is about *time-series* momentum (each
 asset against its own past), while the card ranks assets *cross-sectionally*, so the
