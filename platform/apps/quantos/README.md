@@ -74,6 +74,34 @@ The first two midpoint observations are hand-checkable: **0.471 and 0.4715**, wi
 
 ## Design decisions and remaining work
 
+### Experimental native critic selection
+
+The normal loop accepts an explicit `--native-critic` selection, separately from its proposal
+provider. It admits only one candidate with pinned shared method notes and replayed proposals.
+Price bytes must match the regenerated eight-asset, 60-date persistent synthetic control; a
+caller-supplied label alone is refused. The existing broker owns the fixed command, 120-second total deadline, output bound,
+schema validation and signed receipt. The signed evidence also binds the critic policy and the
+exact frozen method-note text. An interrupted native attempt reserves its run ID to prevent reuse.
+Process waits and pipe joins share the deadline, with a small part reserved for forced cleanup.
+POSIX children run in a dedicated process group; timeout/interruption kills and reaps that group
+before completing cleanup. The process-group checks were run on macOS; no Windows descendant-tree
+cleanup result is claimed.
+
+This path always keeps the holdout sealed, including when the critic raises no objection. It never
+promotes a hypothesis, and a promotion request is refused for this bounded mode. The interactive
+gate is also refused; `status` and explicit `gate --reject` remain available. Timeout, unavailable
+executable and malformed output produce signed unavailable/quarantined outcomes without fallback.
+The default replay/provider behavior is unchanged.
+
+**Current validation is local only, using explicit subprocess test doubles. No real native-critic
+call is claimed.** The unchanged broker command ignores user rules/configuration and disables hooks;
+it also expects one final JSON object, not JSONL completion and usage records. Do not invoke this
+experimental selection where inherited user guards are required. A separately reviewed route that
+preserves those guards and establishes evidence-only tool isolation is still needed before a live
+smoke run. Existing broker-command assertions have not been changed to sidestep that restriction.
+
+The native selection does not replace independent release review or authorize live trading.
+
 The adapter is deliberately bounded to 30–512 observations and one instrument. Its demonstrated fixture has zero latency: event time, receipt time and decision time are equal. Delayed data is rejected. A general adapter needs separate source, receipt, availability and decision clocks plus as-of joins; simply copying timestamps would leak information.
 
 The shared reconstruction API enforces a fresh baseline in the current coverage epoch, including for direct library callers; the application delegates this rule to the library. The application calls `reconstruct_many` once for the requested times. The library preflights coverage, sorts queries internally, sweeps deltas and returns independent books in original query order. Each call includes input preparation and all output copies; coverage scans remain per query and memory includes all requested output levels. The scalar reference remains available unchanged. Query-path measurements on fixed histories do not qualify live ingestion or market throughput. The demo writes one batch into a fresh directory; it is not an ingestion service.

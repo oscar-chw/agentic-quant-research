@@ -16,6 +16,8 @@ portfolio = ["imc4-analysis==0.4.0"]
 quantos-loop = "quantos_showcase.loop:main"
 quantos-execution = "quantos_showcase.execution:main"
 quantos-method = "quantos_showcase.methods:main"
+quantos-shared-note-demo = "quantos_showcase.shared_demo:main"
+quantos-shared-proposal = "quantos_showcase.shared_proposal:main"
 quantos-index = "quantos_showcase.run_index:main"
 quantos-feed = "quantos_showcase.feed:main"
 quantos-quotes = "quantos_showcase.quotes:main"

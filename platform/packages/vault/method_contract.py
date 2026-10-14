@@ -7,6 +7,7 @@ import re
 from fractions import Fraction
 from pathlib import Path
 
+from shared_manifest import SharedManifestError
 from source_access import inspect_note
 
 MAX_NOTE_BYTES = 256 * 1024
@@ -229,6 +230,25 @@ def read_sources(card, base: Path, *, frozen=False):
                 raise ValueError("paper note ineligible: " + decision["reason"])
         snapshots[name] = raw
     return snapshots
+
+
+def shared_note_citation(envelope):
+    """Adapt an admitted method note to vault-method-citation/v1 without paper fields."""
+    required = {"document_id", "document_type", "title", "document", "source_sha256",
+                "manifest_sha256", "source_refs", "rights"}
+    if not isinstance(envelope, dict) or not required.issubset(envelope):
+        raise SharedManifestError("SHARED_ENVELOPE_INVALID", "complete shared-note envelope required")
+    if envelope["document_type"] != "method_note" or not isinstance(envelope["document"], str):
+        raise SharedManifestError("SHARED_ENVELOPE_INVALID", "citation must remain a method note")
+    if not isinstance(envelope["title"], str) or not isinstance(envelope["source_refs"], list):
+        raise SharedManifestError("SHARED_ENVELOPE_INVALID", "title and source references required")
+    if not isinstance(envelope["rights"], dict):
+        raise SharedManifestError("SHARED_ENVELOPE_INVALID", "rights metadata required")
+    return {"schema": "vault-method-citation/v1", "document_id": envelope["document_id"],
+            "document_type": envelope["document_type"], "title": envelope["title"],
+            "document": envelope["document"], "source_sha256": envelope["source_sha256"],
+            "manifest_sha256": envelope["manifest_sha256"], "source_refs": envelope["source_refs"],
+            "rights": envelope["rights"]}
 
 
 def evaluate_card(card, report):

@@ -4,7 +4,7 @@
 
 This is the front page of Oscar's AI quant research system: a vault that keeps book notes and measured results as
 cited, version-controlled notes, a harness whose gates decide when work is done, and AI coding agents that read,
-build and review. Its centrepiece is one complete build: over about four days in September 2026, a Claude Code
+build and review. Its centrepiece is one recorded build: over about four days in September 2026, a Claude Code
 orchestrator and its subagents turned López de Prado's *Advances in Financial Machine Learning* into 1,805
 paraphrased, cited claims and a tested Python library. The result in this repository: 1,417 of 1,615 implemented claims
 verified by passing tests (773 tests, 0 failing). Across the whole project, the orchestrator and about 140 AI
@@ -57,9 +57,9 @@ from that component's README.
 | Component | Repo | Role in the system | Key evidence |
 |---|---|---|---|
 | Book-to-library build (centrepiece) | this repo | The vault's book and results notes, and the library built from them under the gate graph | 1,417 of 1,805 claims have every named test passing; 773 tests pass, 0 fail ([evidence](docs/evidence.md#a-claims)) |
-| Vault, paper layer | [quant-research-vault](https://github.com/oscar-chw/quant-research-vault) | arXiv and OpenAlex metadata into SQLite, indexed in ChromaDB, searched read-only over MCP; not used in this build | 5 offline tests pass; 18,492 paper rows in its local, unpublished database at a 2026-07-30 audit |
+| Vault, paper layer | [quant-research-vault](https://github.com/oscar-chw/quant-research-vault) | arXiv and OpenAlex metadata into SQLite, indexed in ChromaDB, searched read-only over MCP; not used in this build | [18 offline tests](https://github.com/oscar-chw/quant-research-vault#results); 18,492 paper rows in its local, unpublished database at a 2026-07-30 audit |
 | The point-in-time research platform (platform/) | [platform/](platform/README.md), this repo | Point-in-time harness: an LLM proposes hypotheses but never scores them; a pre-registered gate, then a human or a pre-registered rule decides. Also holds the factor lab and an order-book replay package | REAL Binance data, 34 pairs: the gate blocked both control picks, which lost 6.9 and 7.4 bps/day out of sample; the LLM arm is pending until 2027-08-31 |
-| Agent harness | [agent-harness](https://github.com/oscar-chw/agent-harness) | The rules, memory, command guard and gated work graph, packaged as one install for AI coding tools | Held-out guard set: the v0.2 guard blocked 39 of 45 dangerous commands and allowed 20 of 20 safe ones; 836 tests pass (v0.3.2) |
+| Agent harness | [agent-harness](https://github.com/oscar-chw/agent-harness) | The rules, memory, command guard and gated work graph, packaged as one install for AI coding tools | See the harness repository for release-specific checks and limits; its current release is independent of this recorded build |
 | Earlier experiment | [Polymarket-Crypto-5min](https://github.com/oscar-chw/Polymarket-Crypto-5min) | July 2026, separate, not built from the book: a point-in-time walk-forward backtester for Polymarket's Bitcoin 5-minute markets | Found and fixed a look-ahead leak; the corrected selected result is negative (−$12.31 on $160 staked, 16 trades) |
 
 ## Why this exists
